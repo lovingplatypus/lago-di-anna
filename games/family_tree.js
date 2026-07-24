@@ -79,7 +79,7 @@ const famGame = {
     hideGmsg();
     if(!this.extraShown && this.pieces.every(q=>q.factRead)){
       this.extraShown=true;
-      setTimeout(()=>showGmsg('<h3>one extra fun fact ♥</h3><p>The person who made this game likes you more than Funtik likes shopping bags, more than the squirrels like fluff, more than every ranunculus on this lake put together.\n\nEvery game here exists because thinking of you makes even ordinary days feel like something worth building.</p><span class="draft">(draft wording — the real message goes here)</span><br><button onclick="closeGame()">♥</button>'), 400);
+      setTimeout(()=>showGmsg('<h3>one extra fun fact ♥</h3><p>The person who made this game likes you more than Funtik likes shopping bags, more than the squirrels like fluff, more than every ranunculus on this lake put together.\n\nEvery game here exists because thinking of you makes even ordinary days feel like something worth building.</p><br><button onclick="closeGame()">♥</button>'), 400);
     }
   },
   move(x,y){ if(this.drag){ this.drag.x=x; this.drag.y=y; } },
