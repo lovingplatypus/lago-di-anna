@@ -20,6 +20,7 @@ assets = {
     'dogBgRoom': b64('dog_bg_room.webp', 'webp'),
     'dogBgPond': b64('dog_bg_pond.webp', 'webp'),
     'sqLove': b64('squirrels_love.png'),
+    'fruitLetter': b64('fruitstand_letter.png'),
 }
 
 # Family-tree cat photos: drop assets/cat_<name>.png (or .jpg/.jpeg/.webp)
@@ -109,6 +110,21 @@ html = r'''<!DOCTYPE html>
   #letter button { display:block; margin:18px auto 0; font-family:inherit; font-size:15px; background:#c96f5a;
     color:#fff; border:none; border-radius:6px; padding:10px 24px; cursor:pointer; box-shadow:0 3px 0 #8a4436; }
 
+  /* fruit-stall letter (unlocked once every game is done) */
+  #fletter { position:fixed; inset:0; z-index:49; display:none; align-items:center; justify-content:center;
+    background:rgba(20,16,14,.88); padding:18px; }
+  #fletter .fpaper { background:#f2e5c6; border:4px solid #6e4326; border-radius:8px; max-width:560px; width:100%;
+    max-height:90vh; overflow-y:auto; color:#3d2f23; box-shadow:0 12px 0 rgba(0,0,0,.45); }
+  #fletter .fbanner { display:block; width:100%; image-rendering:pixelated; border-bottom:3px solid #6e4326; }
+  #fletter .ftext { padding:26px 26px 8px; }
+  #fletter .ftext p { font-size:15px; line-height:1.72; margin-bottom:14px; }
+  #fletter .ftext .greet { font-size:19px; font-weight:bold; margin-bottom:16px; }
+  #fletter .ftext .sig { margin-top:22px; font-style:italic; line-height:1.5; }
+  #fletter .ftext .sig-name { font-style:italic; font-size:19px; margin-top:2px; margin-bottom:4px; }
+  #fletter button { display:block; margin:6px auto 22px; font-family:inherit; font-size:15px; background:#c96f5a;
+    color:#fff; border:none; border-radius:6px; padding:10px 24px; cursor:pointer; box-shadow:0 3px 0 #8a4436; }
+  #fletter button:active { transform:translateY(2px); box-shadow:none; }
+
   #stick { position:fixed; left:22px; bottom:22px; width:118px; height:118px; border-radius:50%;
     background:rgba(243,230,200,.14); border:2px solid rgba(243,230,200,.35); z-index:30; display:none; }
   #knob { position:absolute; left:50%; top:50%; width:52px; height:52px; border-radius:50%;
@@ -162,6 +178,24 @@ html = r'''<!DOCTYPE html>
   <p class="sig">Looking ahead with anticipation ♥</p>
   <p class="draft">(draft wording — the real letter goes here)</p>
   <button id="l-close">🌊</button>
+</div></div>
+
+<div id="fletter"><div class="fpaper">
+  <img id="fletter-img" class="fbanner" alt="A letter waiting at the fruit stall, on aged paper among lychee and mangosteen">
+  <div class="ftext">
+    <p class="greet">Анна,</p>
+    <p>Thank you for taking the time to play through these little games I made just for you. I know they may not be the most polished games in the world, and I’m sorry I couldn’t make them much nicer. I’m not exactly a game developer after all, but I hope the thought and effort behind them still came through.</p>
+    <p>This all started as just the little platypus game. At first, I thought it would simply be something lighthearted and cute for you to play. But as I kept getting to know you better, and as our conversations continued, it no longer felt right to leave it at only that. Every new thing you told me about yourself gave me another idea, another detail I wanted to include.</p>
+    <p>I wanted it to feel like more than a collection of random games or pages. I wanted it to feel personal. Something that could only have been made for you. Even the smallest details were included because they reminded me of something you said, something you liked, or a conversation we shared.</p>
+    <p>Я знаю, що ми знайомі не так уже й довго, але мені все одно здається, що ти вже дала мені так багато причин цінувати тебе. Що більше я про тебе дізнаюся, то цікавіше мені стає. Я хочу знати, що робить тебе щасливою, що тебе дратує, про що ти мрієш, які в тебе є звички, яких ти можливо сама навіть не помічаєш. Мені хочеться поступово відкривати всі ті дрібниці, з яких складаєшся саме ти.</p>
+    <p>As time goes by, I plan to keep learning more about you, both the strengths and the flaws (which I doubt you have), so I can understand you better and like you that much more. I do not expect you to be perfect, and I would never want you to feel as though you have to be. I simply want to know the real you, and to keep discovering all the things that make you special to me.</p>
+    <p>Even with all the distance between us, making this website made me feel a little closer to you. It gave me a place to put all the thoughts and affection that I could not hand to you in person. I wish I could be there to see your reaction while you go through everything, but for now, I hope this can serve as a small reminder that someone far away was thinking about you, listening to you, and putting care into making something that would make you smile.</p>
+    <p>And who knows, maybe someday down the line I will come back to this website and add even more: new memories, new jokes, new games, and new parts of your life that I have yet to learn about.</p>
+    <p>For now, I hope you enjoyed what I’ve made for you. It may not be perfect, but it was made with more excitement than I would probably like to admit.</p>
+    <p class="sig">З ніжністю,<br>З теплом,<br>Looking ahead at our future with anticipation,</p>
+    <p class="sig-name">Дмитро</p>
+  </div>
+  <button id="fl-close">🍈</button>
 </div></div>
 
 <div id="stick"><div id="knob"></div></div>
@@ -385,6 +419,19 @@ document.getElementById('letter').querySelector('#l-close').onclick = ()=>{
   document.getElementById('letter').style.display='none'; modalOpen=false;
 };
 
+/* fruit-stall letter: the full note, revealed once every game is done */
+document.getElementById('fletter-img').src = ASSETS.fruitLetter;
+function openFruitLetter(){
+  modalOpen = true;
+  const fl = document.getElementById('fletter');
+  fl.style.display = 'flex';
+  fl.scrollTop = 0;
+  const p = fl.querySelector('.fpaper'); if(p) p.scrollTop = 0;
+}
+document.getElementById('fl-close').onclick = ()=>{
+  document.getElementById('fletter').style.display='none'; modalOpen=false;
+};
+
 /* ================= GAME OVERLAY ENGINE ================= */
 const gover = document.getElementById('gover');
 const gcvs = document.getElementById('gcvs');
@@ -447,8 +494,17 @@ function zoneAction(z){
   }
   if(z.id==='house') return openModal({img:'plushy', title:"Anna's House",
     text:'The squishiest platypus plushy on the lake is napping inside. The squishy game moves in soon 💛'});
-  if(z.id==='stall') return openModal({em:'🍈', title:'The Fruit Stall',
-    text:'Lychee and mangosteen, picked this morning. The fruit-catching game arrives with the next harvest.'});
+  if(z.id==='stall'){
+    if(allDone()){
+      openModal({em:'🍈', title:'The Fruit Stall',
+        text:'Among the lychee and mangosteen, a letter is waiting here for you.',
+        alt:'read the letter', onAlt:openFruitLetter, closeLabel:'not yet'});
+    } else {
+      openModal({em:'🍈', title:'The Fruit Stall',
+        text:'Lychee and mangosteen, picked this morning. Come back once you have played every game — something will be waiting.'});
+    }
+    return;
+  }
   if(z.id==='oak'){
     if(!progress.squirrel) openGame(squirrelGame);
     else openModal({em:'🐿️', title:'The Old Oak',

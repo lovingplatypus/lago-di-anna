@@ -80,8 +80,13 @@ which re-embeds the assets and regenerates `game/index.html`.
   - the five cat fun facts (`fact:` fields in `games/family_tree.js` defs)
   - the "one extra fun fact" message to the player (in `factClosed()` in
     `games/family_tree.js`)
+- **The Fruit Stall** now holds the finished thank-you letter: once every
+  game is done, talking to the stall opens `#fletter` (the `fruitstand_letter.png`
+  banner + the full message). The letter text lives in the `#fletter` div in
+  `build.py`. Note this overlaps with the older draft finale letter at the dock
+  (`#letter`) — decide whether you want both.
 - **Remaining games** (currently placeholder modals in `zoneAction`):
-  fruit catcher (stall), squishy clicker (house).
+  squishy clicker (house).
 - **Persistence:** progress is in-memory (`progress` object). On GitHub Pages,
   localStorage is available — serialize `progress` + `mapFlowers` there.
 - **Map coordinates:** collision polygons/rects are at the top of the JS
