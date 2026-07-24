@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Platypus Creek</title>
+<style>
+  :root {
+    --deep: #0d3b3e;
+    --bill: #c9a15a;
+    --cream: #f3e6c8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: var(--deep); }
+  body { font-family: 'Courier New', monospace; color: var(--cream); }
+  #wrap { position: fixed; inset: 0; }
+  canvas#game { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 20px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(13,59,62,0.6), rgba(9,38,40,0.9));
+    backdrop-filter: blur(2px);
+    transition: opacity .35s ease;
+    overflow-y: auto;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .dedication {
+    font-style: italic;
+    font-weight: bold;
+    font-size: clamp(17px, 3.6vw, 24px);
+    color: var(--bill);
+    transform: rotate(-2deg);
+    margin-bottom: 2px;
+  }
+  h1 {
+    font-size: clamp(30px, 7vw, 56px);
+    font-weight: bold;
+    letter-spacing: 2px;
+    line-height: 1.05;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+  }
+  .sub {
+    margin-top: 10px;
+    font-size: clamp(14px, 2.4vw, 17px);
+    opacity: 0.85;
+    max-width: 420px;
+    line-height: 1.45;
+  }
+
+  /* ---- character picker ---- */
+  .picker { margin-top: 18px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .picker-label {
+    font-style: italic;
+    font-size: 16px;
+    color: var(--cream);
+    opacity: 0.9;
+  }
+  #preview {
+    width: 190px; height: 116px;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35), inset 0 0 0 2px rgba(255,255,255,0.15);
+  }
+  .chips { display: flex; gap: 8px; }
+  .chip {
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--cream);
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip.sel {
+    background: var(--bill);
+    border-color: var(--bill);
+    color: #3a2410;
+    font-weight: bold;
+  }
+  .dots { display: flex; gap: 10px; }
+  .dot {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: transform .15s, border-color .15s;
+  }
+  .dot.sel { border-color: #fff; transform: scale(1.18); }
+
+  .btn {
+    margin-top: 20px;
+    font-family: inherit;
+    font-size: clamp(16px, 2.6vw, 19px);
+    font-weight: bold;
+    color: #fff;
+    background: #c96f5a;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 34px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #8a4436, 0 10px 24px rgba(0,0,0,0.35);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #8a4436; }
+  .link-btn {
+    margin-top: 14px;
+    background: none; border: none;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--cream); opacity: 0.7;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .score-line { margin-top: 16px; font-size: clamp(20px, 4vw, 28px); font-weight: 500; }
+  .best-line { margin-top: 6px; font-size: 15px; opacity: 0.7; }
+
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px;
+    pointer-events: none;
+    opacity: 0; transition: opacity .3s;
+  }
+  #hud.show { opacity: 1; }
+  #score { font-size: clamp(24px, 5vw, 34px); font-weight: 600; text-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+  #hearts { font-size: clamp(20px, 4vw, 26px); letter-spacing: 3px; }
+  .heart-lost { opacity: 0.25; filter: grayscale(1); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div id="score">0</div>
+    <div id="hearts"></div>
+  </div>
+
+  <div class="overlay" id="startOverlay">
+    <div class="dedication" id="dedication">for Anna ♡</div>
+    <h1>Platypus Creek</h1>
+    <p class="sub">Hold anywhere (or press <b>space</b>) to dive, release to float up.<br>
+    Catch shrimp 🦐 and espresso ☕ &nbsp;·&nbsp; dodge the snags 🪵</p>
+
+    <div class="picker">
+      <div class="picker-label">choose your platypus</div>
+      <canvas id="preview" width="380" height="232"></canvas>
+      <div class="chips" id="styleChips"></div>
+      <div class="dots" id="colorDots"></div>
+    </div>
+
+    <button class="btn" id="startBtn">Swim!</button>
+  </div>
+
+  <div class="overlay hidden" id="endOverlay">
+    <div class="dedication" id="endNote">splash!</div>
+    <h1 style="font-size: clamp(30px, 7vw, 52px);">Nice swim!</h1>
+    <div class="score-line" id="finalScore"></div>
+    <div class="best-line" id="bestScore"></div>
+    <button class="btn" id="againBtn">Swim again</button>
+    <button class="link-btn" id="changeLookBtn">change my platypus</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  /* ============================================================
+     PERSONALIZE HERE
+     ============================================================ */
+  const CONFIG = {
+    name: "Anna",
+
+    // little notes that appear mid-game when she reaches a score
+    milestones: {
+      10: "a natural! 🦆",
+      25: "the creek is officially yours",
+      50: "NYC → Como, one shrimp at a time ✈️",
+      100: "okay now you're just showing off ♡"
+    },
+
+    // shown the first time she catches an espresso cup
+    coffeeNote: "coffee's on me ♡",
+
+    // end-screen notes by score bracket (random pick within bracket)
+    endNotes: {
+      zero:  ["even platypuses have off days"],
+      low:   ["a modest breakfast", "the shrimp got lucky today"],
+      mid:   ["a very well-fed platypus", "the creek approves"],
+      high:  ["shrimp fear you now, {name}", "legendary swim!"]
+    }
+  };
+  /* ============================================================ */
+
+  // platypus looks
+  const STYLES = { classic: "Creek classic", cartoon: "Cartoon" };
+  const PALETTES = {
+    river: { label: "River brown", fur: "#7a4b2a", dark: "#5c3a20", belly: "#a5764a", tail: "#5e3a1f", tailDark: "#452a14" },
+    teal:  { label: "Teal",        fur: "#26b3a2", dark: "#157f72", belly: "#8fe3d6", tail: "#1c8f80", tailDark: "#12665b" },
+    pink:  { label: "Bubblegum",   fur: "#f27ba6", dark: "#c2537e", belly: "#ffc9dc", tail: "#d9648f", tailDark: "#a84468" },
+    lilac: { label: "Lilac",       fur: "#9d7bd8", dark: "#6f52a8", belly: "#cdb6f0", tail: "#8465bd", tailDark: "#5d4390" }
+  };
+  const look = { style: "classic", color: "river" };
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const pcanvas = document.getElementById('preview');
+  const pctx = pcanvas.getContext('2d');
+  const hud = document.getElementById('hud');
+  const scoreEl = document.getElementById('score');
+  const heartsEl = document.getElementById('hearts');
+  const startOverlay = document.getElementById('startOverlay');
+  const endOverlay = document.getElementById('endOverlay');
+  const finalScoreEl = document.getElementById('finalScore');
+  const bestScoreEl = document.getElementById('bestScore');
+  const endNoteEl = document.getElementById('endNote');
+
+  document.getElementById('dedication').textContent = 'for ' + CONFIG.name + ' ♡';
+
+  // ---------- picker UI ----------
+  const chipsEl = document.getElementById('styleChips');
+  const dotsEl = document.getElementById('colorDots');
+  for (const [key, label] of Object.entries(STYLES)) {
+    const b = document.createElement('button');
+    b.className = 'chip' + (key === look.style ? ' sel' : '');
+    b.textContent = label;
+    b.addEventListener('click', () => {
+      look.style = key;
+      chipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
+      b.classList.add('sel');
+    });
+    chipsEl.appendChild(b);
+  }
+  for (const [key, pal] of Object.entries(PALETTES)) {
+    const d = document.createElement('button');
+    d.className = 'dot' + (key === look.color ? ' sel' : '');
+    d.style.background = pal.fur;
+    d.title = pal.label;
+    d.setAttribute('aria-label', pal.label);
+    d.addEventListener('click', () => {
+      look.color = key;
+      dotsEl.querySelectorAll('.dot').forEach(c => c.classList.remove('sel'));
+      d.classList.add('sel');
+    });
+    dotsEl.appendChild(d);
+  }
+
+  let W = 0, H = 0, dpr = 1, waterTop = 0;
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    waterTop = H * 0.18;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- state ----------
+  const S = { menu: 0, playing: 1, over: 2 };
+  let state = S.menu;
+  let score = 0, best = 0, hearts = 3;
+  let speed = 220;
+  let t = 0;
+  let holding = false;
+  let invincible = 0;
+  let shownMilestones = new Set();
+  let coffeeNoteShown = false;
+
+  const platy = { x: 0, y: 0, vy: 0, r: 26, tilt: 0 };
+  let items = [], snags = [], bubbles = [], ripples = [], popups = [], banners = [], reeds = [];
+  let spawnTimer = 0, snagTimer = 0;
+
+  function initReeds() {
+    reeds = [];
+    for (let i = 0; i < 14; i++) {
+      reeds.push({
+        x: Math.random() * W,
+        h: 40 + Math.random() * 90,
+        w: 5 + Math.random() * 6,
+        sway: Math.random() * Math.PI * 2,
+        depth: Math.random() < 0.5 ? 0.4 : 0.8
+      });
+    }
+  }
+  initReeds();
+
+  function reset() {
+    score = 0; hearts = 3; speed = 220; t = 0; invincible = 0;
+    shownMilestones = new Set();
+    platy.x = W * 0.24;
+    platy.y = waterTop + (H - waterTop) * 0.4;
+    platy.vy = 0; platy.tilt = 0;
+    items = []; snags = []; bubbles = []; ripples = []; popups = []; banners = [];
+    spawnTimer = 0.4; snagTimer = 2.2;
+    updateHud();
+  }
+
+  function updateHud() {
+    scoreEl.textContent = score;
+    heartsEl.innerHTML = Array.from({length: 3}, (_, i) =>
+      `<span class="${i < hearts ? '' : 'heart-lost'}">❤️</span>`).join('');
+  }
+
+  // ---------- input ----------
+  function press(e) { if (e) e.preventDefault(); holding = true; }
+  function release() { holding = false; }
+  canvas.addEventListener('pointerdown', press);
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Space' || e.code === 'ArrowDown') { e.preventDefault(); holding = true; }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.code === 'Space' || e.code === 'ArrowDown') holding = false;
+  });
+
+  document.getElementById('startBtn').addEventListener('click', start);
+  document.getElementById('againBtn').addEventListener('click', start);
+  document.getElementById('changeLookBtn').addEventListener('click', () => {
+    endOverlay.classList.add('hidden');
+    startOverlay.classList.remove('hidden');
+    state = S.menu;
+  });
+
+  function start() {
+    reset();
+    state = S.playing;
+    startOverlay.classList.add('hidden');
+    endOverlay.classList.add('hidden');
+    hud.classList.add('show');
+  }
+
+  function gameOver() {
+    state = S.over;
+    hud.classList.remove('show');
+    if (score > best) best = score;
+    const bracket = score === 0 ? 'zero' : score < 15 ? 'low' : score < 40 ? 'mid' : 'high';
+    const notes = CONFIG.endNotes[bracket];
+    endNoteEl.textContent = notes[Math.floor(Math.random() * notes.length)]
+      .replaceAll('{name}', CONFIG.name);
+    finalScoreEl.textContent = '🦐 ' + score + ' points';
+    bestScoreEl.textContent = 'best this session: ' + best;
+    endOverlay.classList.remove('hidden');
+  }
+
+  // ---------- spawning ----------
+  function spawnItem() {
+    const r = Math.random();
+    const type = r < 0.08 ? 'coffee' : r < 0.18 ? 'golden' : 'shrimp';
+    items.push({
+      x: W + 60,
+      y: waterTop + 40 + Math.random() * (H - waterTop - 100),
+      r: type === 'shrimp' ? 13 : 15,
+      type,
+      wob: Math.random() * Math.PI * 2
+    });
+  }
+  function spawnSnag() {
+    const fromTop = Math.random() < 0.45;
+    const len = 90 + Math.random() * (H - waterTop) * 0.32;
+    snags.push({
+      x: W + 80,
+      w: 30 + Math.random() * 20,
+      len,
+      top: fromTop,
+      knots: [0.3 + Math.random() * 0.2, 0.65 + Math.random() * 0.2]
+    });
+  }
+
+  function addBanner(txt) {
+    banners.push({ txt, life: 2.8 });
+  }
+
+  // ---------- update ----------
+  function update(dt) {
+    t += dt;
+
+    if (state === S.playing) {
+      speed = Math.min(430, 220 + score * 3.2);
+
+      const acc = holding ? 900 : -780;
+      platy.vy += acc * dt;
+      platy.vy = Math.max(-360, Math.min(420, platy.vy));
+      platy.y += platy.vy * dt;
+
+      const minY = waterTop + platy.r + 6, maxY = H - platy.r - 14;
+      if (platy.y < minY) { platy.y = minY; platy.vy = Math.max(0, platy.vy); ripple(platy.x, waterTop); }
+      if (platy.y > maxY) { platy.y = maxY; platy.vy = Math.min(0, platy.vy); }
+      platy.tilt += ((platy.vy / 420) * 0.5 - platy.tilt) * 8 * dt;
+
+      if (invincible > 0) invincible -= dt;
+
+      if (Math.random() < dt * 14) {
+        bubbles.push({ x: platy.x - 30, y: platy.y + (Math.random()*16-8), r: 2 + Math.random()*3, vy: -25 - Math.random()*20, life: 1 });
+      }
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) { spawnItem(); spawnTimer = 0.7 + Math.random() * 0.7 - Math.min(0.3, score*0.004); }
+      snagTimer -= dt;
+      if (snagTimer <= 0) { spawnSnag(); snagTimer = 1.7 + Math.random() * 1.4 - Math.min(0.7, score*0.012); }
+
+      // items
+      for (let i = items.length - 1; i >= 0; i--) {
+        const it = items[i];
+        it.x -= speed * dt;
+        it.wob += dt * 5;
+        const dx = it.x - platy.x, dy = it.y - platy.y;
+        if (dx*dx + dy*dy < Math.pow(platy.r + it.r + 6, 2)) {
+          const pts = it.type === 'coffee' ? 3 : it.type === 'golden' ? 5 : 1;
+          score += pts;
+          const icon = it.type === 'coffee' ? '☕ ' : '';
+          popups.push({ x: it.x, y: it.y, txt: icon + '+' + pts, life: 1, big: it.type !== 'shrimp' });
+          if (it.type === 'coffee' && !coffeeNoteShown) {
+            coffeeNoteShown = true;
+            addBanner(CONFIG.coffeeNote);
+          }
+          for (let b = 0; b < 6; b++) bubbles.push({ x: it.x, y: it.y, r: 1.5 + Math.random()*2.5, vy: -40 - Math.random()*40, life: 0.8 });
+          items.splice(i, 1);
+          updateHud();
+
+          // milestones
+          for (const key of Object.keys(CONFIG.milestones)) {
+            const k = Number(key);
+            if (score >= k && !shownMilestones.has(k)) {
+              shownMilestones.add(k);
+              addBanner(CONFIG.milestones[key].replaceAll('{name}', CONFIG.name));
+            }
+          }
+        } else if (it.x < -40) items.splice(i, 1);
+      }
+
+      // snags
+      for (let i = snags.length - 1; i >= 0; i--) {
+        const sn = snags[i];
+        sn.x -= speed * dt;
+        if (sn.x < -120) { snags.splice(i, 1); continue; }
+        if (invincible <= 0) {
+          const y0 = sn.top ? waterTop : H - sn.len;
+          const y1 = sn.top ? waterTop + sn.len : H;
+          const cx = Math.max(sn.x - sn.w/2, Math.min(platy.x, sn.x + sn.w/2));
+          const cy = Math.max(y0, Math.min(platy.y, y1));
+          const dx = platy.x - cx, dy = platy.y - cy;
+          if (dx*dx + dy*dy < Math.pow(platy.r - 4, 2)) {
+            hearts--;
+            invincible = 1.4;
+            updateHud();
+            for (let b = 0; b < 12; b++) bubbles.push({ x: platy.x, y: platy.y, r: 2 + Math.random()*3, vy: -60 - Math.random()*50, life: 0.9 });
+            if (hearts <= 0) { gameOver(); return; }
+          }
+        }
+      }
+    }
+
+    // ambient / particles
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.y += b.vy * dt; b.x += Math.sin(t*3 + b.r) * 12 * dt; b.life -= dt * 0.9;
+      if (b.life <= 0 || b.y < waterTop) bubbles.splice(i, 1);
+    }
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const r = ripples[i]; r.r += 60 * dt; r.life -= dt * 1.4;
+      if (r.life <= 0) ripples.splice(i, 1);
+    }
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const p = popups[i]; p.y -= 40 * dt; p.life -= dt * 1.2;
+      if (p.life <= 0) popups.splice(i, 1);
+    }
+    for (let i = banners.length - 1; i >= 0; i--) {
+      banners[i].life -= dt;
+      if (banners[i].life <= 0) banners.splice(i, 1);
+    }
+    for (const r of reeds) {
+      r.x -= speed * r.depth * 0.25 * dt * (state === S.playing ? 1 : 0.3);
+      if (r.x < -20) { r.x = W + 20; r.h = 40 + Math.random()*90; }
+    }
+    if (state !== S.playing && Math.random() < dt * 2) {
+      bubbles.push({ x: Math.random()*W, y: H - 20, r: 2+Math.random()*3, vy: -20-Math.random()*20, life: 1 });
+    }
+  }
+
+  function ripple(x, y) {
+    if (ripples.length < 8) ripples.push({ x, y, r: 6, life: 1 });
+  }
+
+  // ---------- drawing ----------
+  function draw() {
+    const sky = ctx.createLinearGradient(0, 0, 0, waterTop);
+    sky.addColorStop(0, '#ffd9a0');
+    sky.addColorStop(1, '#f2a65e');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, waterTop);
+
+    ctx.fillStyle = 'rgba(255, 244, 214, 0.9)';
+    ctx.beginPath(); ctx.arc(W * 0.78, waterTop * 0.55, 26, 0, Math.PI*2); ctx.fill();
+
+    const wat = ctx.createLinearGradient(0, waterTop, 0, H);
+    wat.addColorStop(0, '#1e7a7f');
+    wat.addColorStop(0.5, '#14595e');
+    wat.addColorStop(1, '#0d3b3e');
+    ctx.fillStyle = wat;
+    ctx.fillRect(0, waterTop, W, H - waterTop);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 8) {
+      const y = waterTop + Math.sin(x * 0.02 + t * 2) * 4;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = '#fff3cf';
+    for (let i = 0; i < 3; i++) {
+      const bx = ((i * 0.37 + 0.1) * W + Math.sin(t*0.3 + i)*30);
+      ctx.beginPath();
+      ctx.moveTo(bx, waterTop);
+      ctx.lineTo(bx + 90, waterTop);
+      ctx.lineTo(bx + 220, H);
+      ctx.lineTo(bx + 40, H);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
+    for (const r of reeds) drawReed(r);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    for (const r of ripples) {
+      ctx.globalAlpha = r.life * 0.5;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(r.x, r.y, r.r, r.r * 0.3, 0, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    for (const sn of snags) drawSnag(sn);
+    for (const it of items) drawItem(it);
+
+    for (const b of bubbles) {
+      ctx.globalAlpha = Math.max(0, b.life) * 0.55;
+      ctx.strokeStyle = '#dff5f2';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    if (state !== S.over) {
+      const blink = invincible > 0 && Math.floor(invincible * 10) % 2 === 0;
+      if (!blink) drawPlatypus(ctx, platy.x, state === S.menu ? waterTop + (H-waterTop)*0.42 + Math.sin(t*1.5)*10 : platy.y, platy.tilt, 1);
+    }
+
+    for (const p of popups) {
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.font = 'bold ' + (p.big ? 24 : 18) + 'px Courier New, monospace';
+      ctx.fillStyle = p.big ? '#ffd166' : '#f6e7c8';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.txt, p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+
+    // milestone banners
+    for (const b of banners) {
+      const fade = Math.min(1, b.life) * Math.min(1, (2.8 - b.life) * 3);
+      ctx.globalAlpha = Math.max(0, fade);
+      ctx.font = 'bold italic ' + Math.min(30, W * 0.05) + 'px Courier New, monospace';
+      ctx.fillStyle = '#ffd166';
+      ctx.textAlign = 'center';
+      ctx.save();
+      ctx.translate(W / 2, waterTop + 70 - (2.8 - b.life) * 8);
+      ctx.rotate(-0.03);
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(b.txt, 0, 0);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // menu preview panel
+    if (state === S.menu && !startOverlay.classList.contains('hidden')) drawPreview();
+  }
+
+  function drawPreview() {
+    const pw = 380, ph = 232;
+    pctx.setTransform(2, 0, 0, 2, 0, 0); // canvas is 2x for crispness, css 190x116
+    pctx.clearRect(0, 0, pw, ph);
+    const g = pctx.createLinearGradient(0, 0, 0, ph/2);
+    g.addColorStop(0, '#1e7a7f');
+    g.addColorStop(1, '#0f4649');
+    pctx.fillStyle = g;
+    pctx.fillRect(0, 0, pw/2, ph/2);
+    pctx.globalAlpha = 0.4;
+    pctx.strokeStyle = '#dff5f2';
+    pctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const bx = 25 + i * 60 + Math.sin(t*1.5 + i*2) * 6;
+      const by = 90 - ((t * 18 + i * 35) % 90);
+      pctx.beginPath(); pctx.arc(bx, by, 2.5, 0, Math.PI*2); pctx.stroke();
+    }
+    pctx.globalAlpha = 1;
+    drawPlatypus(pctx, 88, 58 + Math.sin(t * 1.8) * 5, Math.sin(t * 1.2) * 0.06, 0.95);
+  }
+
+  function drawReed(r) {
+    const sway = Math.sin(t * 1.2 + r.sway) * 8;
+    ctx.save();
+    ctx.globalAlpha = r.depth * 0.35;
+    ctx.strokeStyle = '#0a2f2f';
+    ctx.lineWidth = r.w;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(r.x, H);
+    ctx.quadraticCurveTo(r.x + sway * 0.4, H - r.h * 0.6, r.x + sway, H - r.h);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSnag(sn) {
+    const y0 = sn.top ? waterTop - 6 : H - sn.len;
+    ctx.save();
+    ctx.translate(sn.x, 0);
+    ctx.fillStyle = '#4a3320';
+    ctx.strokeStyle = '#33220f';
+    ctx.lineWidth = 3;
+    const x0 = -sn.w/2;
+    roundRect(ctx, x0, y0, sn.w, sn.len + 6, 10);
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0 + sn.w*0.3, y0 + 8);
+    ctx.lineTo(x0 + sn.w*0.3, y0 + sn.len - 8);
+    ctx.stroke();
+    ctx.fillStyle = '#33220f';
+    for (const k of sn.knots) {
+      ctx.beginPath();
+      ctx.ellipse(0, y0 + sn.len * k, 5, 7, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawItem(it) {
+    if (it.type === 'coffee') drawCoffee(it);
+    else drawShrimp(it);
+  }
+
+  function drawCoffee(it) {
+    const bob = Math.sin(it.wob) * 4;
+    ctx.save();
+    ctx.translate(it.x, it.y + bob);
+    ctx.rotate(Math.sin(it.wob * 0.6) * 0.1);
+    // saucer
+    ctx.fillStyle = '#f3ede2';
+    ctx.strokeStyle = '#c9bda6';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(0, it.r * 0.7, it.r * 1.2, it.r * 0.35, 0, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    // cup
+    ctx.fillStyle = '#fffdf7';
+    ctx.strokeStyle = '#c9bda6';
+    ctx.beginPath();
+    ctx.moveTo(-it.r * 0.75, -it.r * 0.5);
+    ctx.lineTo(-it.r * 0.55, it.r * 0.55);
+    ctx.lineTo(it.r * 0.55, it.r * 0.55);
+    ctx.lineTo(it.r * 0.75, -it.r * 0.5);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // handle
+    ctx.beginPath();
+    ctx.arc(it.r * 0.85, 0, it.r * 0.35, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    // coffee surface
+    ctx.fillStyle = '#5a3a22';
+    ctx.beginPath(); ctx.ellipse(0, -it.r * 0.5, it.r * 0.72, it.r * 0.22, 0, 0, Math.PI*2);
+    ctx.fill();
+    // steam
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    for (let s = -1; s <= 1; s += 2) {
+      ctx.beginPath();
+      const sx = s * it.r * 0.3;
+      ctx.moveTo(sx, -it.r * 0.7);
+      ctx.quadraticCurveTo(sx + Math.sin(t*4 + s) * 5, -it.r * 1.1, sx, -it.r * 1.5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawShrimp(it) {
+    const bob = Math.sin(it.wob) * 4;
+    const golden = it.type === 'golden';
+    ctx.save();
+    ctx.translate(it.x, it.y + bob);
+    ctx.rotate(Math.sin(it.wob * 0.7) * 0.15);
+    const body = golden ? '#ffd166' : '#ff8b6a';
+    const dark = golden ? '#e0a92e' : '#e05c3a';
+    if (golden) { ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 14; }
+    ctx.fillStyle = body;
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, it.r, -0.4, Math.PI + 0.5);
+    ctx.arc(0, 0, it.r * 0.45, Math.PI + 0.5, -0.4, true);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 1.5;
+    for (let a = 0.4; a < Math.PI; a += 0.55) {
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * it.r * 0.5, Math.sin(a) * it.r * 0.5);
+      ctx.lineTo(Math.cos(a) * it.r * 0.95, Math.sin(a) * it.r * 0.95);
+      ctx.stroke();
+    }
+    ctx.fillStyle = dark;
+    ctx.beginPath();
+    ctx.moveTo(it.r * 0.85, -it.r * 0.5);
+    ctx.lineTo(it.r * 1.5, -it.r * 0.95);
+    ctx.lineTo(it.r * 1.45, -it.r * 0.2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.beginPath(); ctx.arc(-it.r * 0.75, -it.r * 0.35, 2.2, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = dark;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-it.r * 0.9, -it.r * 0.4);
+    ctx.quadraticCurveTo(-it.r * 1.6, -it.r * 0.9, -it.r * 1.9, -it.r * 0.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPlatypus(c, x, y, tilt, scale) {
+    const pal = PALETTES[look.color];
+    const cartoon = look.style === 'cartoon';
+    const lw = cartoon ? 4 : 3;
+    c.save();
+    c.translate(x, y);
+    c.rotate(tilt);
+    c.scale(scale, scale);
+
+    // tail
+    const wag = Math.sin(t * 6) * 0.12;
+    c.save();
+    c.translate(-30, 2);
+    c.rotate(wag);
+    c.fillStyle = pal.tail;
+    c.strokeStyle = pal.tailDark;
+    c.lineWidth = lw;
+    c.beginPath();
+    if (cartoon) {
+      // flat paddle tail
+      c.moveTo(0, -10);
+      c.quadraticCurveTo(-42, -16, -40, 0);
+      c.quadraticCurveTo(-42, 16, 0, 10);
+      c.closePath();
+    } else {
+      c.ellipse(-16, 0, 22, 13, 0, 0, Math.PI*2);
+    }
+    c.fill(); c.stroke();
+    c.restore();
+
+    // back webbed foot
+    c.fillStyle = '#d07f2e';
+    c.beginPath();
+    c.ellipse(-8, 20, 9, 5, 0.5 + Math.sin(t*8)*0.25, 0, Math.PI*2);
+    c.fill();
+
+    // body
+    c.fillStyle = pal.fur;
+    c.strokeStyle = pal.dark;
+    c.lineWidth = lw;
+    c.beginPath();
+    c.ellipse(0, 0, 32, cartoon ? 19 : 21, 0, 0, Math.PI*2);
+    c.fill(); c.stroke();
+
+    // belly
+    if (!cartoon) {
+      c.fillStyle = pal.belly;
+      c.beginPath();
+      c.ellipse(2, 8, 22, 11, 0, 0, Math.PI*2);
+      c.fill();
+    }
+
+    // front webbed foot
+    c.fillStyle = '#e8933a';
+    c.strokeStyle = '#b76a1d';
+    c.lineWidth = 2;
+    c.save();
+    c.translate(10, 18);
+    c.rotate(Math.sin(t * 8 + 1) * 0.45);
+    c.beginPath();
+    c.ellipse(0, 4, 10, 6, 0.4, 0, Math.PI*2);
+    c.fill(); c.stroke();
+    c.restore();
+
+    // head
+    c.fillStyle = pal.fur;
+    c.strokeStyle = pal.dark;
+    c.lineWidth = lw;
+    c.beginPath();
+    c.ellipse(26, -8, 15, cartoon ? 14 : 13, -0.15, 0, Math.PI*2);
+    c.fill(); c.stroke();
+
+    // bill
+    c.fillStyle = cartoon ? '#f5a53a' : '#e8933a';
+    c.strokeStyle = '#b76a1d';
+    c.lineWidth = cartoon ? 3 : 2.5;
+    c.beginPath();
+    if (cartoon) {
+      // wide flat duckbill
+      c.moveTo(33, -16);
+      c.quadraticCurveTo(64, -19, 65, -9);
+      c.quadraticCurveTo(65, 1, 50, 1);
+      c.quadraticCurveTo(38, 1, 33, -4);
+      c.closePath();
+    } else {
+      c.moveTo(34, -14);
+      c.quadraticCurveTo(58, -16, 60, -8);
+      c.quadraticCurveTo(61, -2, 52, -1);
+      c.quadraticCurveTo(42, 0, 34, -3);
+      c.closePath();
+    }
+    c.fill(); c.stroke();
+    // nostrils
+    c.fillStyle = '#8a4d12';
+    c.beginPath(); c.arc(cartoon ? 56 : 53, -10, 1.5, 0, Math.PI*2); c.fill();
+    c.beginPath(); c.arc(cartoon ? 60 : 56, -9, 1.5, 0, Math.PI*2); c.fill();
+
+    // eyes
+    if (cartoon) {
+      // big googly eyes perched high
+      for (const [ex, ey] of [[22, -19], [32, -20]]) {
+        c.fillStyle = '#fff';
+        c.strokeStyle = pal.dark;
+        c.lineWidth = 2.5;
+        c.beginPath(); c.arc(ex, ey, 7, 0, Math.PI*2); c.fill(); c.stroke();
+        c.fillStyle = '#1e1208';
+        c.beginPath(); c.arc(ex + 2, ey + 1, 3, 0, Math.PI*2); c.fill();
+        c.fillStyle = '#fff';
+        c.beginPath(); c.arc(ex + 3, ey, 1, 0, Math.PI*2); c.fill();
+      }
+    } else {
+      c.fillStyle = '#1e1208';
+      c.beginPath(); c.arc(29, -12, 3.2, 0, Math.PI*2); c.fill();
+      c.fillStyle = '#fff';
+      c.beginPath(); c.arc(30, -13, 1.1, 0, Math.PI*2); c.fill();
+      c.fillStyle = 'rgba(232,147,58,0.35)';
+      c.beginPath(); c.arc(24, -4, 4.5, 0, Math.PI*2); c.fill();
+    }
+
+    c.restore();
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

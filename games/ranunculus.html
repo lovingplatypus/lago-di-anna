@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ranunculus — a turning-bloom puzzle</title>
+<meta name="description" content="Turn the petal rings until every dotted petal points straight up and the color flows unbroken from the heart.">
+<style>
+  :root{
+    --ink:#241d18;
+    --cream:#f3e6c8;
+    --cream-dim:#b3a488;
+    --line:#5a4736;
+    --accent:#c9a15a;
+    --px:"Courier New",monospace;
+    --mono:"Courier New",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1100px 750px at 50% -10%, #332a1e 0%, transparent 60%),
+      radial-gradient(900px 700px at 85% 110%, #2c2418 0%, transparent 55%),
+      var(--ink);
+    color:var(--cream);
+    font-family:var(--mono);
+    min-height:100svh;
+    display:flex;flex-direction:column;overflow-x:hidden;
+  }
+  .drift canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+
+  .drift{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .drift canvas{position:absolute;opacity:.16;animation:fall linear infinite}
+  @keyframes fall{
+    0%{transform:translateY(-8vh)} 100%{transform:translateY(108vh)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .drift{display:none}
+    *{transition:none !important;animation:none !important}
+  }
+
+  header{
+    position:relative;z-index:2;display:flex;align-items:baseline;justify-content:space-between;
+    gap:1rem;padding:1.1rem 1.4rem .7rem;max-width:880px;width:100%;margin:0 auto;flex-wrap:wrap;
+  }
+  .wordmark{font-family:var(--px);font-weight:bold;font-size:15px;letter-spacing:.08em;text-shadow:2px 2px 0 #000}
+  .wordmark span{color:var(--accent)}
+  .hud{display:flex;gap:1.2rem;font-family:var(--px);font-weight:bold;font-size:12px;color:var(--cream-dim)}
+  .hud b{color:var(--cream);font-weight:bold}
+
+  main{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 1rem;max-width:880px;margin:0 auto;width:100%}
+
+  .variety{font-family:var(--px);font-weight:bold;font-size:clamp(16px,3.6vw,20px);letter-spacing:.06em;text-align:center;line-height:1.4;text-shadow:2px 2px 0 #000}
+  .variety small{display:block;font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--cream-dim);margin-top:.45rem}
+
+  #stage{width:min(92vw,56svh);aspect-ratio:1;margin:.55rem 0 0;touch-action:none;cursor:grab;position:relative}
+  #stage:active{cursor:grabbing}
+  #stage:focus-visible{outline:2px dashed var(--cream-dim);outline-offset:6px}
+
+  /* smooth SVG bloom (original renderer) */
+  #bloom .ring{transform-origin:0 0;transition:transform .3s cubic-bezier(.3,1.4,.4,1)}
+  #bloom.dragging .ring{transition:none}
+  #bloom.solved .ring{transition:transform .8s ease}
+  #bloom.solved{animation:settle 2.6s ease}
+  @keyframes settle{
+    0%{transform:scale(1)} 30%{transform:scale(1.035)} 60%{transform:scale(.99)} 100%{transform:scale(1)}
+  }
+  .ringGuide{fill:none;stroke:var(--cream);stroke-opacity:0;stroke-dasharray:3 7;pointer-events:none;transition:stroke-opacity .2s}
+  .ringGuide.sel{stroke-opacity:.35}
+
+  .msg{min-height:2.2em;font-size:.84rem;color:var(--cream-dim);text-align:center;max-width:34rem;line-height:1.5;margin-top:.3rem}
+  .msg.win{color:var(--accent)}
+
+  .controls{display:flex;gap:.7rem;margin:.7rem 0 1.1rem;flex-wrap:wrap;justify-content:center}
+  button{
+    font-family:var(--px);font-weight:bold;font-size:13px;letter-spacing:.04em;
+    background:#5a4736;color:var(--cream);border:2px solid var(--accent);
+    border-radius:6px;padding:.55rem .9rem;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.4);
+  }
+  button:hover,button:focus-visible{border-color:var(--cream);outline:none}
+  button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+
+  .gathered{position:relative;z-index:1;border-top:2px solid var(--line);padding:.9rem 1.4rem 1.3rem;max-width:880px;margin:0 auto;width:100%}
+  .gathered h2{font-family:var(--px);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream-dim);font-weight:bold;margin-bottom:.7rem}
+  #bouquet{display:flex;gap:1rem;align-items:flex-end;min-height:78px}
+  #bouquet .stemwrap{display:flex;flex-direction:column;align-items:center;animation:rise .5s steps(4,end)}
+  @keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+  #bouquet .stem{width:4px;height:24px;background:#3c5a3a;border-left:2px solid #243524}
+  #bouquet .empty{font-size:.78rem;color:#8a7a5f;align-self:center}
+
+  #veil{position:fixed;inset:0;z-index:10;background:rgba(20,16,14,.85);display:flex;align-items:center;justify-content:center;padding:1.4rem}
+  #veil.hidden{display:none}
+  .card{max-width:30rem;text-align:center;border:4px solid #7a4a2e;border-radius:10px;background:#f7ecd7;box-shadow:0 10px 0 rgba(0,0,0,.35);padding:1.6rem 1.4rem;color:#3d2f23}
+  .card h1{font-family:var(--px);font-weight:bold;font-size:22px;letter-spacing:.1em;margin-bottom:1.1rem}
+  .card p{color:#5b4a37;line-height:1.6;margin-bottom:.85rem;font-size:.9rem}
+  .card p.rule{color:#3d2f23;border:2px dashed #b08d5f;border-radius:6px;padding:.6rem .7rem}
+  .card p.rule b{color:#c96f5a}
+  .card .keys{font-size:.74rem;color:#8a7a5f}
+  .card button{margin-top:1rem;background:#c96f5a;color:#fff;border:none;box-shadow:0 3px 0 #8a4436;padding:.7rem 1.4rem}
+</style>
+</head>
+<body>
+
+<div class="drift" id="drift" aria-hidden="true"></div>
+
+<header>
+  <div class="wordmark">RANUNCULUS <span>◆</span> turning-bloom puzzle</div>
+  <div class="hud"><span>BLOOM <b id="lvlNum">1</b></span><span>TURNS <b id="moves">0</b></span><span>PAR <b id="par">-</b></span></div>
+</header>
+
+<main>
+  <div class="variety"><span id="varName">Butter</span><small id="varNote"></small></div>
+  <div id="stage" aria-label="Puzzle bloom. Up and down arrows select a ring, left and right turn it." tabindex="0"></div>
+  <div class="msg" id="msg"></div>
+  <div class="controls">
+    <button id="btnShuffle">Reshuffle</button>
+    <button id="btnHint">Hint</button>
+    <button id="btnSkip">Skip bloom</button>
+  </div>
+</main>
+
+<section class="gathered">
+  <h2>Gathered</h2>
+  <div id="bouquet"><span class="empty">solved blooms are cut for the vase...</span></div>
+</section>
+
+<div id="veil">
+  <div class="card">
+    <h1>RANUNCULUS</h1>
+    <p>A ranunculus hides dozens of petals in patient, concentric rings.
+       Someone has turned them out of true.</p>
+    <p class="rule">Every ring carries exactly one <b>dotted petal</b>.
+       The bloom is solved only when <b>all the dots point straight up</b>,
+       twelve o'clock, and the color flows unbroken from the heart.</p>
+    <p>Drag any ring to turn it — but take care: in later blooms,
+       rings turn their neighbors with them.</p>
+    <p class="keys">Drag with mouse or finger · or ↑↓ to choose a ring, ←→ to turn it</p>
+    <button id="btnStart">Begin in the garden</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function(){
+  const TAU = Math.PI*2;
+  const SVGNS = "http://www.w3.org/2000/svg";
+
+  /* ---------- level definitions (real ranunculus varieties) ---------- */
+  const LEVELS = [
+    {name:"BUTTER",   note:"Tecolote strain",       hue:46,  sat:78, rings:3, petals:10, couple:"none",     scramble:5,
+     msg:"Free rings. Turn each until its dot points up."},
+    {name:"BLUSH",    note:"Cloni Success 'Hanoi'", hue:341, sat:52, rings:4, petals:10, couple:"inner",    scramble:6,
+     msg:"Each ring now carries the one inside it."},
+    {name:"CORAL",    note:"Amandine strain",       hue:14,  sat:74, rings:4, petals:12, couple:"both",     scramble:7,
+     msg:"Rings pull both neighbors along."},
+    {name:"PICOTEE",  note:"Cafe-edged Tecolote",   hue:38,  sat:34, rings:5, petals:12, couple:"innerRev", scramble:8, edge:"hsl(350 60% 38%)",
+     msg:"The inner neighbor turns against you."},
+    {name:"BURGUNDY", note:"Elegance 'Vino'",       hue:352, sat:60, rings:5, petals:14, couple:"bothRev",  scramble:9, dark:true,
+     msg:"Both neighbors turn the other way."},
+    {name:"VERDIGRIS",note:"Butterfly 'Europe'",    hue:96,  sat:26, rings:6, petals:14, couple:"alt",      scramble:11,
+     msg:"Coupling alternates ring by ring. Breathe."}
+  ];
+
+  /* ---------- state ---------- */
+  let lvlIndex = 0, level = null, offsets = [], moves = 0, par = 0;
+  let selected = 0, solvedLock = false, gatheredCount = 0;
+
+  const stage   = document.getElementById("stage");
+  const msgEl   = document.getElementById("msg");
+  const bouquet = document.getElementById("bouquet");
+
+  /* coupling: how many steps ring j turns when ring i is turned one step */
+  function coupleFactor(i, j, mode){
+    if(i === j) return 1;
+    if(Math.abs(i-j) !== 1) return 0;
+    switch(mode){
+      case "inner":    return (j === i-1) ?  1 : 0;
+      case "both":     return 1;
+      case "innerRev": return (j === i-1) ? -1 : 0;
+      case "bothRev":  return -1;
+      case "alt":      return (i % 2 === 0) ? 1 : -1;
+      default:         return 0;
+    }
+  }
+
+  /* ---------- smooth SVG bloom (original renderer) ---------- */
+  function petalPath(r0, r1, halfW){
+    const h1 = (r1-r0)*0.30, h2 = (r1-r0)*0.42;
+    return `M 0 ${-r0}
+            C ${-halfW} ${-r0-h1} ${-halfW*0.92} ${-r1+h2} 0 ${-r1}
+            C ${halfW*0.92} ${-r1+h2} ${halfW} ${-r0-h1} 0 ${-r0} Z`;
+  }
+
+  function petalColor(cfg, ringI, k){
+    const t = k / cfg.petals;                    // position around the ring
+    const hue = (cfg.hue + 30*t) % 360;          // hue sweep — the seam is the tell
+    const baseL = cfg.dark ? 30 : 52;
+    const light = baseL + ringI*3 + 16*t;        // lightness sweep, inner rings deeper
+    return `hsl(${hue} ${cfg.sat}% ${light}%)`;
+  }
+
+  function buildBloom(cfg, size, interactive){
+    const svg = document.createElementNS(SVGNS,"svg");
+    svg.setAttribute("viewBox","-260 -260 520 520");
+    if(size){ svg.setAttribute("width",size); svg.setAttribute("height",size); }
+    const R = cfg.rings, N = cfg.petals;
+    const inner = 34, outer = 244;
+    const band = (outer-inner)/R;
+    const rings = [];
+
+    for(let i=R-1;i>=0;i--){                     // outer first so inner overlaps on top
+      const g = document.createElementNS(SVGNS,"g");
+      g.classList.add("ring");
+      g.dataset.ring = i;
+      const r0 = inner + i*band, r1 = r0 + band*1.35;
+      const halfW = Math.max(10, r0 * Math.sin(Math.PI/N) * 1.55);
+      for(let k=0;k<N;k++){
+        const p = document.createElementNS(SVGNS,"path");
+        p.setAttribute("d", petalPath(r0, r1, halfW));
+        p.setAttribute("fill", petalColor(cfg, i, k));
+        p.setAttribute("stroke", cfg.edge ? cfg.edge : `hsl(${cfg.hue} ${cfg.sat}% ${cfg.dark?16:30}%)`);
+        p.setAttribute("stroke-width", cfg.edge ? 2.4 : 1.1);
+        p.setAttribute("transform", `rotate(${(k/N)*360})`);
+        g.appendChild(p);
+        if(k===0){                               // the dotted petal — must end at twelve o'clock
+          const dew = document.createElementNS(SVGNS,"circle");
+          const dr = (r0+r1)/2;
+          dew.setAttribute("cx",0); dew.setAttribute("cy",-dr);
+          dew.setAttribute("r", Math.max(2.4, band*0.09));
+          dew.setAttribute("fill","rgba(255,255,255,.75)");
+          g.appendChild(dew);
+        }
+      }
+      svg.appendChild(g);
+      rings[i] = g;
+    }
+
+    /* the dark green eye of the ranunculus */
+    const eye = document.createElementNS(SVGNS,"g");
+    const disc = document.createElementNS(SVGNS,"circle");
+    disc.setAttribute("r", inner*0.82);
+    disc.setAttribute("fill","#1d2b17");
+    eye.appendChild(disc);
+    for(let d=0; d<26; d++){
+      const a = d*2.399963, rr = 4 + Math.sqrt(d)*4.6;   // phyllotaxis dots
+      const c = document.createElementNS(SVGNS,"circle");
+      c.setAttribute("cx", Math.cos(a)*rr);
+      c.setAttribute("cy", Math.sin(a)*rr);
+      c.setAttribute("r", 2.1);
+      c.setAttribute("fill", d%3 ? "#2f4423" : "#455f2c");
+      eye.appendChild(c);
+    }
+    svg.appendChild(eye);
+
+    if(interactive){
+      const guides = [];
+      for(let i=0;i<R;i++){
+        const gc = document.createElementNS(SVGNS,"circle");
+        gc.classList.add("ringGuide");
+        gc.setAttribute("r", inner + i*band + band*0.65);
+        svg.appendChild(gc);
+        guides[i]=gc;
+      }
+      return {svg, rings, guides, inner, band};
+    }
+    return {svg, rings};
+  }
+
+  /* ---------- live game ---------- */
+  let bloom = null;
+
+  function stepAngle(){ return 360/level.petals; }
+
+  function applyTransforms(previewRing=-1, previewDeg=0){
+    for(let i=0;i<level.rings;i++){
+      let deg = offsets[i]*stepAngle();
+      if(previewRing>=0){
+        deg += previewDeg * coupleFactor(previewRing, i, level.couple);
+      }
+      bloom.rings[i].style.transform = `rotate(${deg}deg)`;
+    }
+  }
+
+  function commitMove(ringI, steps){
+    if(!steps || solvedLock) return;
+    for(let j=0;j<level.rings;j++){
+      offsets[j] += steps * coupleFactor(ringI, j, level.couple);
+    }
+    moves += Math.abs(steps);
+    document.getElementById("moves").textContent = moves;
+    applyTransforms();
+    if(isSolved()) onSolved();
+  }
+
+  function isSolved(){
+    const N = level.petals;
+    return offsets.every(o => ((o % N) + N) % N === 0);
+  }
+
+  function scramble(){
+    const N = level.petals;
+    do{
+      offsets = new Array(level.rings).fill(0);
+      for(let s=0; s<level.scramble; s++){
+        const i = Math.floor(Math.random()*level.rings);
+        const st = (Math.random()<.5?-1:1) * (1+Math.floor(Math.random()*2));
+        for(let j=0;j<level.rings;j++){
+          offsets[j] += st * coupleFactor(i, j, level.couple);
+        }
+      }
+    }while(isSolved());
+    /* normalize so transforms stay small */
+    offsets = offsets.map(o => ((o % N)+N) % N).map(o => o > N/2 ? o-N : o);
+  }
+
+  function loadLevel(idx){
+    solvedLock = false;
+    level = idx < LEVELS.length ? LEVELS[idx] : evergreen(idx);
+    lvlIndex = idx;
+    moves = 0; par = level.scramble*2; selected = 0;
+
+    document.getElementById("lvlNum").textContent = idx+1;
+    document.getElementById("moves").textContent = 0;
+    document.getElementById("par").textContent = par;
+    document.getElementById("varName").textContent = level.name;
+    document.getElementById("varNote").textContent = level.note;
+    setMsg(level.msg || "");
+
+    stage.innerHTML = "";
+    bloom = buildBloom(level, null, true);
+    bloom.svg.id = "bloom";
+    stage.appendChild(bloom.svg);
+    scramble();
+    applyTransforms();
+    highlightSel();
+  }
+
+  /* endless mode past the six named varieties */
+  function evergreen(idx){
+    const n = idx - LEVELS.length;
+    const hues = [24,205,332,58,282,8,160];
+    return {
+      name:"EVERGREEN "+(n+1), note:"seedling of unknown parentage",
+      hue:hues[n % hues.length], sat:45+((n*13)%40),
+      rings:Math.min(6, 4 + (n % 3) + (n > 5 ? 1 : 0)),
+      petals:10+2*((n>>1)%3),
+      couple:["inner","both","innerRev","bothRev","alt"][n % 5],
+      scramble:9+Math.min(n,8),
+      msg:"The garden keeps growing."
+    };
+  }
+
+  function setMsg(t, win){ msgEl.textContent=t; msgEl.classList.toggle("win", !!win); }
+
+  function highlightSel(){
+    bloom.guides.forEach((g,i)=>g.classList.toggle("sel", i===selected));
+  }
+
+  function onSolved(){
+    solvedLock = true;
+    bloom.svg.classList.add("solved");
+    try{ parent.postMessage("ranunculus-solved", "*"); }catch(e){}
+    const verdict = moves<=par ? "under par — the grower's touch." : "the bloom forgives the extra turns.";
+    setMsg(`Every dot at twelve o'clock. ${cap(level.name)} settles into true — gathered ${verdict}`, true);
+    setTimeout(()=>{ gather(); loadLevel(lvlIndex+1); }, 2300);
+  }
+  function cap(s){ return s.charAt(0)+s.slice(1).toLowerCase(); }
+
+  function gather(){
+    if(gatheredCount===0) bouquet.innerHTML="";
+    gatheredCount++;
+    const wrap = document.createElement("div");
+    wrap.className="stemwrap";
+    const mini = buildBloom(level, 56, false);
+    mini.rings.forEach(g=>g.style.transform="rotate(0deg)");
+    wrap.appendChild(mini.svg);
+    const stem = document.createElement("div");
+    stem.className="stem";
+    wrap.appendChild(stem);
+    bouquet.appendChild(wrap);
+  }
+
+  /* ---------- pointer dragging (smooth, snaps on release) ---------- */
+  let drag = null;
+  function stageAngle(ev){
+    const r = bloom.svg.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    return Math.atan2(ev.clientY-cy, ev.clientX-cx);
+  }
+  function ringAt(ev){
+    const r = bloom.svg.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const distPx = Math.hypot(ev.clientX-cx, ev.clientY-cy);
+    const unit = (r.width/2) / 260;              // px per viewBox unit
+    const dist = distPx/unit;
+    if(dist < bloom.inner*0.8) return -1;
+    const i = Math.floor((dist - bloom.inner) / bloom.band);
+    return (i>=0 && i<level.rings) ? i : -1;
+  }
+
+  stage.addEventListener("pointerdown", ev=>{
+    if(solvedLock) return;
+    const i = ringAt(ev);
+    if(i<0) return;
+    selected = i; highlightSel();
+    drag = {ring:i, start:stageAngle(ev), last:stageAngle(ev), acc:0};
+    bloom.svg.classList.add("dragging");
+    stage.setPointerCapture(ev.pointerId);
+  });
+  stage.addEventListener("pointermove", ev=>{
+    if(!drag) return;
+    const a = stageAngle(ev);
+    let d = a - drag.last;
+    if(d >  Math.PI) d -= TAU;
+    if(d < -Math.PI) d += TAU;
+    drag.acc += d; drag.last = a;
+    applyTransforms(drag.ring, drag.acc*180/Math.PI);
+  });
+  function endDrag(){
+    if(!drag) return;
+    const steps = Math.round((drag.acc*180/Math.PI) / stepAngle());
+    const ring = drag.ring;
+    drag = null;
+    bloom.svg.classList.remove("dragging");
+    if(steps) commitMove(ring, steps);
+    else applyTransforms();
+  }
+  stage.addEventListener("pointerup", endDrag);
+  stage.addEventListener("pointercancel", endDrag);
+
+  /* ---------- keyboard ---------- */
+  stage.addEventListener("keydown", ev=>{
+    if(solvedLock) return;
+    if(ev.key==="ArrowUp"){ selected=(selected+1)%level.rings; highlightSel(); ev.preventDefault(); }
+    else if(ev.key==="ArrowDown"){ selected=(selected-1+level.rings)%level.rings; highlightSel(); ev.preventDefault(); }
+    else if(ev.key==="ArrowRight"){ commitMove(selected, 1); ev.preventDefault(); }
+    else if(ev.key==="ArrowLeft"){ commitMove(selected, -1); ev.preventDefault(); }
+  });
+
+  /* ---------- buttons ---------- */
+  document.getElementById("btnShuffle").addEventListener("click", ()=>{
+    if(solvedLock) return;
+    moves=0; document.getElementById("moves").textContent=0;
+    scramble(); applyTransforms(); setMsg("Turned out of true again.");
+  });
+  document.getElementById("btnHint").addEventListener("click", ()=>{
+    if(solvedLock) return;
+    const N=level.petals;
+    const i = offsets.findIndex(o=>((o%N)+N)%N!==0);
+    if(i<0) return;
+    selected=i; highlightSel();
+    const off=((offsets[i]%N)+N)%N;
+    const dir = off<=N/2 ? "counter-clockwise" : "clockwise";
+    const n = Math.min(off,N-off);
+    setMsg(`Ring ${i+1} from the heart: its dot is ${n} petal${n>1?"s":""} from twelve o'clock — try ${dir}.`);
+  });
+  document.getElementById("btnSkip").addEventListener("click", ()=>{
+    if(solvedLock) return;
+    loadLevel(lvlIndex+1);
+  });
+  document.getElementById("btnStart").addEventListener("click", ()=>{
+    document.getElementById("veil").classList.add("hidden");
+    stage.focus();
+  });
+
+  /* ---------- ambient drifting pixel petals ---------- */
+  (function drift(){
+    const host=document.getElementById("drift");
+    const hues=[46,341,14,352,96];
+    const rows=[[3,5],[2,6],[1,8],[1,8],[2,6],[3,5],[4,3]];   // [startX,width] on 10-wide sprite
+    for(let i=0;i<9;i++){
+      const cv=document.createElement("canvas");
+      cv.width=10; cv.height=8;
+      const cc=cv.getContext("2d");
+      const h=hues[i%hues.length];
+      rows.forEach((r,y)=>{
+        cc.fillStyle=`hsl(${h} 55% ${48+y*3}%)`;
+        cc.fillRect(r[0],y,r[1],1);
+      });
+      const sz=12+Math.random()*18;
+      cv.style.width=sz+"px"; cv.style.height=(sz*0.8)+"px";
+      cv.style.left=(Math.random()*100)+"vw";
+      cv.style.animationDuration=(16+Math.random()*22)+"s";
+      cv.style.animationDelay=(-Math.random()*30)+"s";
+      host.appendChild(cv);
+    }
+  })();
+
+  loadLevel(0);
+})();
+</script>
+</body>
+</html>
