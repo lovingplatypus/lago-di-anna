@@ -257,6 +257,16 @@ const zones = [
 ];
 const catZone = [320,300,500,395];
 
+/* waypoint signs drawn on the map so the games are findable from afar;
+   x,y is the tip of the sign's pointer (map pixels) */
+const waypoints = [
+  {x:410,  y:158, em:'🐈', label:'family tree',    done:()=>progress.family},
+  {x:228,  y:682, em:'🌸', label:'ranunculus',     done:()=>progress.garden},
+  {x:1210, y:827, em:'🐿️', label:'squirrel fluff', done:()=>progress.squirrel},
+  {x:315,  y:922, em:'🦆', label:'platypus creek', done:()=>false},
+  {x:1095, y:287, em:'🍈', label:'fruit stall',    done:()=>false, stall:true},
+];
+
 /* ---------- setup ---------- */
 const cvs = document.getElementById('game');
 const ctx = cvs.getContext('2d');
@@ -648,6 +658,32 @@ function update(dt, t){
 }
 
 /* ---------- draw ---------- */
+/* a floating sign with a pointer tip at (x,y), in map space */
+function drawMarker(x, y, txt, faded, t, i){
+  const bob = Math.sin(t*0.0028 + i*1.7)*3.5;
+  ctx.save();
+  ctx.globalAlpha = faded ? 0.45 : 0.95;
+  ctx.font = 'bold 19px Courier New';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(txt).width + 20, h = 32, r = 6;
+  const bx = Math.max(6, Math.min(MAPW-6-w, x - w/2));
+  const by = y - h - 8 + bob;
+  ctx.beginPath();
+  ctx.moveTo(bx+r, by);
+  ctx.lineTo(bx+w-r, by); ctx.quadraticCurveTo(bx+w, by, bx+w, by+r);
+  ctx.lineTo(bx+w, by+h-r); ctx.quadraticCurveTo(bx+w, by+h, bx+w-r, by+h);
+  ctx.lineTo(x+7, by+h); ctx.lineTo(x, by+h+8); ctx.lineTo(x-7, by+h);
+  ctx.lineTo(bx+r, by+h); ctx.quadraticCurveTo(bx, by+h, bx, by+h-r);
+  ctx.lineTo(bx, by+r); ctx.quadraticCurveTo(bx, by, bx+r, by);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(42,35,32,.88)';
+  ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = '#c9a15a'; ctx.stroke();
+  ctx.fillStyle = '#f3e6c8';
+  ctx.fillText(txt, bx + w/2, by + h/2 + 1);
+  ctx.restore();
+}
+
 function draw(t){
   const scale = Math.max(vw/MAPW, vh/MAPH);
   let camX = anna.x - vw/scale/2, camY = anna.y - vh/scale/2;
@@ -742,6 +778,17 @@ function draw(t){
     ctx.fillStyle = 'rgba(201,70,90,'+Math.min(1,p.t)+')';
     ctx.fillText(p.txt, p.x, p.y);
   }
+
+  /* waypoint signs, on top of everything */
+  let wi = 0;
+  for(const w of waypoints){
+    let txt = w.em + ' ' + w.label, faded = false;
+    if(w.stall && allDone()) txt = w.em + ' a letter for you';
+    else if(w.done()){ txt += ' ✓'; faded = true; }
+    drawMarker(w.x, w.y, txt, faded, t, wi++);
+  }
+  for(const d of dogs)
+    drawMarker(d.x, d.y-52, progress.dogs ? '🐾 ✓' : '🐾 hide & seek', progress.dogs, t, wi++);
 }
 
 function loop(now){

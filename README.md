@@ -105,6 +105,10 @@ which re-embeds the assets and regenerates `game/index.html`.
   with instructions; input and updates stay paused until the player starts.
   All games are replayable from their zone dialogs after completion.
 - Depth sorting: land sprites are drawn sorted by feet-Y each frame.
+- Waypoint signs (`waypoints` array + `drawMarker()` in `build.py`) float over
+  every game spot with the game's name so the player can see where to go; two
+  more follow the dogs. A finished game's sign fades to a ✓, and the fruit-stall
+  sign flips to "a letter for you" once everything is complete.
 - Family-tree photos come from `assets/cat_<name>.{png,jpg,jpeg,webp}`
   (malva, lola, sergei, naomi, funtik) — already present; drop in a new file
   and rebuild to swap one.
