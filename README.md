@@ -40,8 +40,6 @@ games/             ← one file per mini-game, editable individually:
                        ranunculus.html     (standalone turning-bloom puzzle, embedded
                                             whole at the garden; reports solves to the
                                             world via postMessage "ranunculus-solved")
-                       garden.js           (legacy tap-to-bloom garden — NOT built;
-                                            replaced by ranunculus.html)
 assets/            ← processed game sprites (transparent bg, game-scaled) + map
 ```
 
@@ -73,18 +71,15 @@ which re-embeds the assets and regenerates `game/index.html`.
 
 ## Game TODO / where things live in build.py
 
-- **Draft texts to replace (search for "draft"):**
-  - the garden apology message (in `openRanunculus()` in `build.py`, shown
-    when leaving the garden after the first solved bloom)
-  - the "one extra fun fact" message to the player (in `factClosed()` in
-    `games/family_tree.js`)
 - **The Fruit Stall** holds the finished thank-you letter: once every game
   is done, talking to the stall opens `#fletter` (the `fruitstand_letter.png`
   banner + the full message). The letter text lives in the `#fletter` div in
   `build.py`. (The old draft finale letter at the dock has been removed —
   the boat is purely ambient now.)
-- **Remaining games** (currently placeholder modals in `zoneAction`):
-  squishy clicker (house).
+- **All in-game text is finalized** — no draft/placeholder copy remains. The
+  four games are the family tree, ranunculus, find-the-dog, and squirrel nest,
+  plus the Platypus Creek arcade at the dock. Anna's House and the Fruit Stall
+  are flavor spots, not games.
 - **Persistence:** progress is in-memory (`progress` object). On GitHub Pages,
   localStorage is available — serialize `progress` + `mapFlowers` there.
 - **Map coordinates:** collision polygons/rects are at the top of the JS
@@ -96,7 +91,7 @@ which re-embeds the assets and regenerates `game/index.html`.
 - One `<canvas>` renders the world with a cover-fit camera that follows Anna.
 - All ambient creatures (dogs, platypus, boat, cat) share a tiny state-machine
   pattern (`pause / walk / follow / hop`, plus dive for the platypus).
-- Mini-games are objects (`famGame`, `gardenGame`, `dogGame`, `squirrelGame`)
+- Mini-games are objects (`famGame`, `dogGame`, `squirrelGame`)
   with `init/layout/down/move/up/update/draw`, rendered on a separate overlay
   canvas (`#gcvs`). `openGame(obj)` / `closeGame()` switch between world and
   game. An optional `intro` string (+ `introBtn` label) shows a start screen

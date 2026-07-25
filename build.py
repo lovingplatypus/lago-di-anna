@@ -103,7 +103,6 @@ html = r'''<!DOCTYPE html>
     color:#3d2f23; display:none; z-index:5; }
   #gmsg h3 { margin-bottom:10px; font-size:20px; }
   #gmsg p { font-size:15px; line-height:1.55; white-space:pre-line; }
-  #gmsg .draft { display:block; margin-top:10px; font-size:11px; opacity:.55; font-style:italic; }
   #gmsg button { margin-top:16px; font-family:inherit; font-size:15px; background:#c96f5a; color:#fff; border:none;
     border-radius:6px; padding:10px 22px; cursor:pointer; box-shadow:0 3px 0 #8a4436; }
 
@@ -405,7 +404,7 @@ function openRanunculus(){
     if(progress.garden && !gardenMsgShown){
       gardenMsgShown = true;
       openModal({title:'they bloomed',
-        text:'I owe you an apology: once, on a beautiful day, I could not get you your favorite flowers.\n\nSo I planted them here instead — now they bloom for you whenever you want.\n\n(draft wording — the real message goes here)'});
+        text:"I'm sorry I couldn't get you ranunculus flowers for your birthday.\n\nSo I made sure to have them here for you instead — a whole patch, blooming on the lake whenever you want, and they'll never wilt."});
     }
   });
 }
@@ -486,7 +485,7 @@ function zoneAction(z){
   if(z.id==='garden'){ openRanunculus(); return; }
   if(z.id==='dock'){ openCreek(); return; }
   if(z.id==='house') return openModal({img:'plushy', title:"Anna's House",
-    text:'The squishiest platypus plushy on the lake is napping inside. The squishy game moves in soon.'});
+    text:'Inside, the squishiest platypus plushy on the lake is napping on the pillow. Best not to wake him.'});
   if(z.id==='stall'){
     if(allDone()){
       openModal({title:'The Fruit Stall',
