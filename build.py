@@ -21,6 +21,7 @@ assets = {
     'dogBgPond': b64('dog_bg_pond.webp', 'webp'),
     'sqLove': b64('squirrels_love.png'),
     'fruitLetter': b64('fruitstand_letter.png'),
+    'splashBg': b64('splash_bg.png'),
 }
 
 # Family-tree cat photos: drop assets/cat_<name>.png (or .jpg/.jpeg/.webp)
@@ -46,11 +47,19 @@ html = r'''<!DOCTYPE html>
   html,body { width:100%; height:100%; overflow:hidden; background:#2a2320; font-family:'Courier New',monospace; }
   #game { position:fixed; inset:0; image-rendering:pixelated; image-rendering:crisp-edges; touch-action:none; }
 
-  #splash { position:fixed; inset:0; background:#2a2320; display:flex; flex-direction:column;
+  #splash { position:fixed; inset:0; background:#0b1022 center/cover no-repeat; display:flex; flex-direction:column;
     align-items:center; justify-content:center; z-index:50; transition:opacity .8s; color:#f3e6c8; text-align:center; padding:20px; }
-  #splash h1 { font-size:clamp(34px,8vw,64px); letter-spacing:3px; text-shadow:3px 3px 0 #7a4a2e; }
-  #splash p { margin-top:14px; font-size:clamp(14px,3.5vw,18px); opacity:.85; }
-  #splash .go { margin-top:36px; font-size:clamp(14px,3.5vw,17px); border:2px solid #f3e6c8; padding:12px 26px;
+  #splash .splashcard { background:rgba(14,12,26,.6); border:2px solid rgba(201,161,90,.5); border-radius:14px;
+    padding:26px 24px 30px; max-width:452px; width:100%; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+    box-shadow:0 16px 44px rgba(0,0,0,.55); }
+  #splash h1 { font-size:clamp(32px,7.5vw,58px); letter-spacing:3px; text-shadow:3px 3px 0 #7a4a2e; }
+  #splash .sub { margin-top:12px; font-size:clamp(13px,3.4vw,17px); opacity:.9; }
+  #splash .howto { list-style:none; text-align:left; margin:22px auto 0; max-width:352px;
+    font-size:clamp(13px,3.3vw,15px); line-height:1.5; }
+  #splash .howto li { margin:9px 0; }
+  #splash .howto b { color:#f3d79a; }
+  #splash .ctrl { margin-top:16px; font-size:clamp(11px,2.8vw,13px); opacity:.7; }
+  #splash .go { display:inline-block; margin-top:24px; font-size:clamp(14px,3.5vw,17px); border:2px solid #f3e6c8; padding:11px 26px;
     border-radius:4px; animation:pulse 1.6s infinite; }
   @keyframes pulse { 50% { opacity:.45; } }
   #splash.hidden { opacity:0; pointer-events:none; }
@@ -128,9 +137,17 @@ html = r'''<!DOCTYPE html>
 <canvas id="game"></canvas>
 
 <div id="splash">
+  <div class="splashcard">
   <h1>Lago di Anna</h1>
-  <p>un piccolo mondo sul Lago di Como 🌸</p>
+  <p class="sub">un piccolo mondo sul Lago di Como 🌸</p>
+  <ul class="howto">
+    <li>🗺️ Explore the lake — a little sign marks each game.</li>
+    <li>🎮 Play <b>every game at least once</b> (the icons up top fill in as you go).</li>
+    <li>🍈 Then visit the <b>fruit stall</b> — a letter is waiting there for you.</li>
+  </ul>
+  <div class="ctrl">move with the arrow keys / WASD — or the on-screen stick on mobile</div>
   <div class="go">tap to begin</div>
+  </div>
 </div>
 
 <div id="prompt"></div>
@@ -400,6 +417,7 @@ addEventListener('message', e=>{
       for(let i=0;i<8;i++) mapFlowers.push({x:230+Math.random()*140, y:400+Math.random()*270, c:cols[i%4]});
   }
 });
+document.getElementById('splash').style.backgroundImage = 'url("'+ASSETS.splashBg+'")';
 document.getElementById('splash').addEventListener('pointerdown', ()=>{
   document.getElementById('splash').classList.add('hidden'); started=true; refreshHud();
 });
