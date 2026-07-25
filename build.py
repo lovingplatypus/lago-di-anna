@@ -404,7 +404,7 @@ function openRanunculus(){
     if(progress.garden && !gardenMsgShown){
       gardenMsgShown = true;
       openModal({title:'they bloomed',
-        text:"I'm sorry I couldn't get you ranunculus flowers for your birthday.\n\nSo I made sure to have them here for you instead — a whole patch, blooming on the lake whenever you want, and they'll never wilt."});
+        text:"I'm sorry I couldn't get you ranunculus flowers for your birthday.\n\nSo I made sure to have them here for you instead, a whole patch blooming on the lake whenever you want, and they'll never wilt. Plus a little game to go alongside them"});
     }
   });
 }
