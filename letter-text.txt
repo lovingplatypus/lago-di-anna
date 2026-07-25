@@ -76,7 +76,7 @@ CHAPTER 2 — THE NOTIFICATION
 The Notification
 
 [18] headline:
-Months later after liking I liked your story, *you remembered.*
+Months later, after I liked your story, *you remembered.*
 
 [19] chat mock — timestamp 1:
 JUN 12 AT 1:08 AM
@@ -110,7 +110,7 @@ One coffee at "the book store" (crossed out) *Kinship.*
 The original plan was coffee at a bookstore nearby. Turns out they had closed their coffee shop a while ago and never bothered to tell Google Maps. Honestly, I think it worked out better this way.
 
 [28] paragraph 2:
-So we walked to Pier 17 instead and sat by the water, looking at the bridge and Dumbo. The time spent istening to your voice as you spoke and looking at your hazel eyes in the sunlight constantly replays in my mind.
+So we walked to Pier 17 instead and sat by the water, looking at the bridge and Dumbo. The time spent listening to your voice as you spoke and looking at your hazel eyes in the sunlight constantly replays in my mind.
 
 [29] handwritten line:
 and then you flew to Italy that same evening. of course you did.
