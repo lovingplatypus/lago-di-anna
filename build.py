@@ -409,6 +409,7 @@ function openRanunculus(){
   });
 }
 addEventListener('message', e=>{
+  if(e.data === 'ranunculus-exit'){ document.getElementById('equit').click(); return; }
   if(e.data === 'ranunculus-solved' && !progress.garden){
     progress.garden = true; refreshHud();
     const cols = ['#f2a3b3','#f7c873','#f7f3f0','#f0937a'];

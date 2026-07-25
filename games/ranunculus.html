@@ -97,6 +97,11 @@
   .card p.rule b{color:#c96f5a}
   .card .keys{font-size:.74rem;color:#8a7a5f}
   .card button{margin-top:1rem;background:#c96f5a;color:#fff;border:none;box-shadow:0 3px 0 #8a4436;padding:.7rem 1.4rem}
+  #done{position:fixed;inset:0;z-index:11;background:rgba(20,16,14,.85);display:flex;align-items:center;justify-content:center;padding:1.4rem}
+  #done.hidden{display:none}
+  .card .btns{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap}
+  .card .btns button{margin-top:1rem}
+  .card button.ghost{background:#5a4736;color:var(--cream);box-shadow:0 3px 0 rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -139,6 +144,18 @@
   </div>
 </div>
 
+<div id="done" class="hidden">
+  <div class="card">
+    <h1>THREE BLOOMS</h1>
+    <p>You've turned three ranunculus back to true and gathered them for the vase.</p>
+    <p>The garden will keep growing for as long as you like.</p>
+    <div class="btns">
+      <button id="btnKeep">keep going</button>
+      <button id="btnLeave" class="ghost">return to the lake</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 (function(){
@@ -163,7 +180,7 @@
 
   /* ---------- state ---------- */
   let lvlIndex = 0, level = null, offsets = [], moves = 0, par = 0;
-  let selected = 0, solvedLock = false, gatheredCount = 0;
+  let selected = 0, solvedLock = false, gatheredCount = 0, doneShown = false;
 
   const stage   = document.getElementById("stage");
   const msgEl   = document.getElementById("msg");
@@ -362,7 +379,13 @@
     try{ parent.postMessage("ranunculus-solved", "*"); }catch(e){}
     const verdict = moves<=par ? "under par — the grower's touch." : "the bloom forgives the extra turns.";
     setMsg(`Every dot at twelve o'clock. ${cap(level.name)} settles into true — gathered ${verdict}`, true);
-    setTimeout(()=>{ gather(); loadLevel(lvlIndex+1); }, 2300);
+    setTimeout(()=>{
+      gather();
+      if(gatheredCount >= 3 && !doneShown){
+        doneShown = true;
+        document.getElementById("done").classList.remove("hidden");
+      } else loadLevel(lvlIndex+1);
+    }, 2300);
   }
   function cap(s){ return s.charAt(0)+s.slice(1).toLowerCase(); }
 
@@ -461,6 +484,16 @@
   document.getElementById("btnStart").addEventListener("click", ()=>{
     document.getElementById("veil").classList.add("hidden");
     stage.focus();
+  });
+  document.getElementById("btnKeep").addEventListener("click", ()=>{
+    document.getElementById("done").classList.add("hidden");
+    loadLevel(lvlIndex+1);
+    stage.focus();
+  });
+  document.getElementById("btnLeave").addEventListener("click", ()=>{
+    document.getElementById("done").classList.add("hidden");
+    loadLevel(lvlIndex+1);
+    try{ parent.postMessage("ranunculus-exit","*"); }catch(e){}
   });
 
   /* ---------- ambient drifting pixel petals ---------- */
