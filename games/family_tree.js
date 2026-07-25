@@ -6,13 +6,13 @@ const famGame = {
   // bg = pixel position of the painted frame in famtree_bg (1536x1024).
   // slot = [column, row] for the portrait fallback layout: Malva→Sergei on
   // the left, Lola→Naomi on the right, Funtik (their kitten) at the bottom.
-  // fact: fun fact shown after the game is solved (draft placeholders for now)
+  // fact: fun fact shown after the game is solved
   defs:[
-    {id:'malva',  name:'Malva',  slot:[0,   0], bg:[248,248], tint:'#d9a8c4', fact:'A fun fact about Malva will live here soon.'},
-    {id:'lola',   name:'Lola',   slot:[1,   0], bg:[533,248], tint:'#c9a15a', fact:'A fun fact about Lola will live here soon.'},
-    {id:'sergei', name:'Sergei', slot:[0,   1], bg:[248,513], tint:'#9db3c9', fact:'A fun fact about Sergei will live here soon.'},
-    {id:'naomi',  name:'Naomi',  slot:[1,   1], bg:[533,514], tint:'#a8c9a2', fact:'A fun fact about Naomi will live here soon.'},
-    {id:'funtik', name:'Funtik', slot:[0.5, 2], bg:[402,793], tint:'#e0b9a2', fact:'A fun fact about Funtik will live here soon.'},
+    {id:'malva',  name:'Malva',  slot:[0,   0], bg:[248,248], tint:'#d9a8c4', fact:'Malva is a cuddler — but only with me. She follows me around everywhere I go.'},
+    {id:'lola',   name:'Lola',   slot:[1,   0], bg:[533,248], tint:'#c9a15a', fact:'Lola is pretty much the owner of the house. She loves being on my shoulders, and shows it by lifting her arm up and meowing at me to get up there. I\'ve given her shoulder rides since she was a kitten.'},
+    {id:'sergei', name:'Sergei', slot:[0,   1], bg:[248,513], tint:'#9db3c9', fact:'Sergei talks too much. He yells 24/7 — especially when mom isn\'t home.'},
+    {id:'naomi',  name:'Naomi',  slot:[1,   1], bg:[533,514], tint:'#a8c9a2', fact:'Naomi bites your nose when she\'s hungry and swats at your hands when she wants pets. She also loves belly rubs.'},
+    {id:'funtik', name:'Funtik', slot:[0.5, 2], bg:[402,793], tint:'#e0b9a2', fact:'Funtik chews on the paper towel roll to show that he\'s hungry — or when he doesn\'t get something he wants.'},
   ],
   tray:[[940,330],[1140,330],[1340,330],[1040,600],[1240,600]],
   links:[['malva','sergei'],['lola','naomi'],['sergei','funtik'],['naomi','funtik']],
@@ -62,7 +62,7 @@ const famGame = {
       for(const p of this.pieces){
         if(p.locked && Math.abs(x-p.sx)<this.cw/2+8 && Math.abs(y-p.sy)<this.ch/2+8){
           p.factRead=true;
-          showGmsg('<h3>'+p.name+' 🐈</h3><p>'+p.fact+'</p><span class="draft">(placeholder — the real fun facts arrive soon)</span><br><button onclick="famGame.factClosed()">aww</button>');
+          showGmsg('<h3>'+p.name+' 🐈</h3><p>'+p.fact+'</p><br><button onclick="famGame.factClosed()">aww</button>');
           return;
         }
       }

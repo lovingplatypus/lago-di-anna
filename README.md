@@ -77,7 +77,6 @@ which re-embeds the assets and regenerates `game/index.html`.
   - the garden apology message (in `openRanunculus()` in `build.py`, shown
     when leaving the garden after the first solved bloom)
   - the final letter (the `#letter` div in the HTML)
-  - the five cat fun facts (`fact:` fields in `games/family_tree.js` defs)
   - the "one extra fun fact" message to the player (in `factClosed()` in
     `games/family_tree.js`)
 - **The Fruit Stall** now holds the finished thank-you letter: once every
