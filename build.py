@@ -151,7 +151,7 @@ html = r'''<!DOCTYPE html>
 </div>
 
 <div id="prompt"></div>
-<div id="hud"><span id="h-fam">●</span><span id="h-gar">●</span><span id="h-dog">●</span><span id="h-squ">●</span></div>
+<div id="hud"><span id="h-fam">🐈</span><span id="h-gar">🌸</span><span id="h-dog">🐾</span><span id="h-squ">🐿️</span></div>
 
 <div id="modal"><div class="card">
   <div class="em" id="m-em"></div>
