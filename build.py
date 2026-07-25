@@ -98,18 +98,6 @@ html = r'''<!DOCTYPE html>
   #gmsg button { margin-top:16px; font-family:inherit; font-size:15px; background:#c96f5a; color:#fff; border:none;
     border-radius:6px; padding:10px 22px; cursor:pointer; box-shadow:0 3px 0 #8a4436; }
 
-  /* letter */
-  #letter { position:fixed; inset:0; z-index:48; display:none; align-items:center; justify-content:center;
-    background:rgba(20,16,14,.85); padding:18px; }
-  #letter .paper { background:#fbf3df; border:4px solid #7a4a2e; border-radius:6px; max-width:520px; width:100%;
-    max-height:86vh; overflow-y:auto; padding:34px 30px; color:#3d2f23; box-shadow:0 12px 0 rgba(0,0,0,.4); }
-  #letter h2 { font-size:22px; margin-bottom:16px; text-align:center; }
-  #letter p { font-size:15.5px; line-height:1.7; margin-bottom:14px; }
-  #letter .sig { text-align:right; font-style:italic; margin-top:20px; }
-  #letter .draft { font-size:11px; opacity:.5; font-style:italic; text-align:center; margin-top:16px; }
-  #letter button { display:block; margin:18px auto 0; font-family:inherit; font-size:15px; background:#c96f5a;
-    color:#fff; border:none; border-radius:6px; padding:10px 24px; cursor:pointer; box-shadow:0 3px 0 #8a4436; }
-
   /* fruit-stall letter (unlocked once every game is done) */
   #fletter { position:fixed; inset:0; z-index:49; display:none; align-items:center; justify-content:center;
     background:rgba(20,16,14,.88); padding:18px; }
@@ -169,16 +157,6 @@ html = r'''<!DOCTYPE html>
   <div id="ebar"><span id="etitle"></span><button id="equit">back to the lake</button></div>
   <iframe id="embedFrame" title="mini game"></iframe>
 </div>
-
-<div id="letter"><div class="paper">
-  <h2>🕊️ Dear Anna,</h2>
-  <p>Thank you for playing through these little games. I made every one of them myself, and I am sorry if the animations could be smoother — I never claimed to be a game developer.</p>
-  <p>This all started with just the platypus game. But as I kept getting to know you better, through all of our conversations, it only felt right to keep building.</p>
-  <p>I hope to keep hearing you laugh at the squirrels and their fluff, and so much more. And who knows — maybe someday down the line we will come back to this little world and add to it together.</p>
-  <p class="sig">Looking ahead with anticipation ♥</p>
-  <p class="draft">(draft wording — the real letter goes here)</p>
-  <button id="l-close">🌊</button>
-</div></div>
 
 <div id="fletter"><div class="fpaper">
   <img id="fletter-img" class="fbanner" alt="A letter waiting at the fruit stall, on aged paper among lychee and mangosteen">
@@ -425,10 +403,6 @@ addEventListener('message', e=>{
 document.getElementById('splash').addEventListener('pointerdown', ()=>{
   document.getElementById('splash').classList.add('hidden'); started=true; refreshHud();
 });
-document.getElementById('letter').querySelector('#l-close').onclick = ()=>{
-  document.getElementById('letter').style.display='none'; modalOpen=false;
-};
-
 /* fruit-stall letter: the full note, revealed once every game is done */
 document.getElementById('fletter-img').src = ASSETS.fruitLetter;
 function openFruitLetter(){
@@ -492,16 +466,7 @@ __GAMES__
 /* ---------- zone actions ---------- */
 function zoneAction(z){
   if(z.id==='garden'){ openRanunculus(); return; }
-  if(z.id==='dock'){
-    if(allDone()){
-      openModal({em:'🦆', title:'Platypus Creek',
-        text:'The platypus is ready to race — and in the boat, a letter with your name on it.',
-        alt:'play in the creek', onAlt:openCreek,
-        closeLabel:'read the letter 🕊️',
-        onClose:()=>{ modalOpen=true; document.getElementById('letter').style.display='flex'; }});
-    } else openCreek();
-    return;
-  }
+  if(z.id==='dock'){ openCreek(); return; }
   if(z.id==='house') return openModal({img:'plushy', title:"Anna's House",
     text:'The squishiest platypus plushy on the lake is napping inside. The squishy game moves in soon 💛'});
   if(z.id==='stall'){
@@ -549,7 +514,7 @@ function update(dt, t){
     promptEl.style.display = 'block';
     const key = document.body.classList.contains('touch') ? 'tap &#9733;' : 'press SPACE';
     let label;
-    if(zone) label = (zone.id==='dock' && allDone()) ? '&#9973; board the boat' : '&#11088; '+zone.name;
+    if(zone) label = '&#11088; '+zone.name;
     else if(nearCat) label = '&#128008; the sphynx is watching';
     else label = '&#128062; a very good dog';
     promptEl.innerHTML = label + ' &mdash; <b>' + key + '</b>';
@@ -641,14 +606,13 @@ function update(dt, t){
   }
 
   /* boat */
-  if(boat.moored){ boat.t-=dt; if(boat.t<=0 && !allDone()){ boat.moored=false; boat.dir = boat.x<700?1:-1; } }
+  if(boat.moored){ boat.t-=dt; if(boat.t<=0){ boat.moored=false; boat.dir = boat.x<700?1:-1; } }
   else {
     boat.x += boat.dir*26*dt;
     if(Math.random()<dt*1.5) ripples.push({x:boat.x-boat.dir*52, y:boat.y+18, r:4, t:1.1});
     if(boat.dir>0 && boat.x>=940){ boat.moored=true; boat.t=5+Math.random()*4; }
     if(boat.dir<0 && boat.x<=470){ boat.moored=true; boat.t=6+Math.random()*5; }
   }
-  if(allDone() && !boat.moored && boat.dir>0){ boat.dir=-1; } // come home for the finale
 
   cat.blink -= dt; if(cat.blink<=0) cat.blink = 2.5+Math.random()*3;
   cat.meow = Math.max(0, cat.meow-dt);
@@ -716,11 +680,6 @@ function draw(t){
 
   const bob = Math.sin(t*0.0021)*2.4;
   ctx.drawImage(imgs.boat, boat.x-55, boat.y-30+bob);
-  if(allDone() && boat.moored){
-    ctx.fillStyle = 'rgba(247,236,215,'+(0.5+0.5*Math.sin(t*0.005))+')';
-    ctx.font = 'bold 22px Courier New'; ctx.textAlign='center';
-    ctx.fillText('⛵', boat.x, boat.y - 46 + bob);
-  }
 
   if(platy.alpha > 0.02){
     ctx.save();
