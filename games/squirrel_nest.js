@@ -1,6 +1,6 @@
 /* ================= GAME 4: The Squirrel Nest ================= */
 const squirrelGame = {
-  title:'🐿️ The Squirrel Nest',
+  title:'The Squirrel Nest',
   intro:'The squirrel is building the coziest nest on the lake, and fluff is tumbling down from the old oak.\nTap the fluff before the wind steals it — it falls faster and faster as the nest fills.',
   introBtn:'gather fluff',
   need:12,
@@ -68,7 +68,7 @@ const squirrelGame = {
         if(this.nestCount>=this.need && !this.done){
           this.done=true; progress.squirrel=true; refreshHud();
           for(let h=0;h<10;h++) this.hearts.push({x:this.nest.x, y:this.nest.y-40, vx:Math.random()*80-40, vy:-40-Math.random()*50, t:1.5});
-          setTimeout(()=>showGmsg('<h3>love at the old oak 🐿️♥🐿️</h3><p>The nest is packed with the softest fluff on the lake —\nand someone came to share it.</p><button onclick="closeGame()">aww</button>'), 1200);
+          setTimeout(()=>showGmsg('<h3>love at the old oak ♥</h3><p>The nest is packed with the softest fluff on the lake —\nand someone came to share it.</p><button onclick="closeGame()">aww</button>'), 1200);
         }
       } else { f.x+=dx/d*sp*dt; f.y+=dy/d*sp*dt; }
     }

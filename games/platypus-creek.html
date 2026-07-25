@@ -128,8 +128,8 @@
   }
   #hud.show { opacity: 1; }
   #score { font-size: clamp(24px, 5vw, 34px); font-weight: 600; text-shadow: 0 3px 0 rgba(0,0,0,0.3); }
-  #hearts { font-size: clamp(20px, 4vw, 26px); letter-spacing: 3px; }
-  .heart-lost { opacity: 0.25; filter: grayscale(1); }
+  #hearts { font-size: clamp(20px, 4vw, 26px); letter-spacing: 3px; color: #ff7a6b; }
+  .heart-lost { opacity: 0.25; }
 </style>
 </head>
 <body>
@@ -145,7 +145,7 @@
     <div class="dedication" id="dedication">for Anna ♡</div>
     <h1>Platypus Creek</h1>
     <p class="sub">Hold anywhere (or press <b>space</b>) to dive, release to float up.<br>
-    Catch shrimp 🦐 and espresso ☕ &nbsp;·&nbsp; dodge the snags 🪵</p>
+    Catch shrimp and espresso &nbsp;·&nbsp; dodge the snags</p>
 
     <div class="picker">
       <div class="picker-label">choose your platypus</div>
@@ -177,9 +177,9 @@
 
     // little notes that appear mid-game when she reaches a score
     milestones: {
-      10: "a natural! 🦆",
+      10: "a natural!",
       25: "the creek is officially yours",
-      50: "NYC → Como, one shrimp at a time ✈️",
+      50: "NYC → Como, one shrimp at a time",
       100: "okay now you're just showing off ♡"
     },
 
@@ -303,7 +303,7 @@
   function updateHud() {
     scoreEl.textContent = score;
     heartsEl.innerHTML = Array.from({length: 3}, (_, i) =>
-      `<span class="${i < hearts ? '' : 'heart-lost'}">❤️</span>`).join('');
+      `<span class="${i < hearts ? '' : 'heart-lost'}">♥</span>`).join('');
   }
 
   // ---------- input ----------
@@ -343,7 +343,7 @@
     const notes = CONFIG.endNotes[bracket];
     endNoteEl.textContent = notes[Math.floor(Math.random() * notes.length)]
       .replaceAll('{name}', CONFIG.name);
-    finalScoreEl.textContent = '🦐 ' + score + ' points';
+    finalScoreEl.textContent = score + ' points';
     bestScoreEl.textContent = 'best this session: ' + best;
     endOverlay.classList.remove('hidden');
   }
@@ -413,7 +413,7 @@
         if (dx*dx + dy*dy < Math.pow(platy.r + it.r + 6, 2)) {
           const pts = it.type === 'coffee' ? 3 : it.type === 'golden' ? 5 : 1;
           score += pts;
-          const icon = it.type === 'coffee' ? '☕ ' : '';
+          const icon = '';
           popups.push({ x: it.x, y: it.y, txt: icon + '+' + pts, life: 1, big: it.type !== 'shrimp' });
           if (it.type === 'coffee' && !coffeeNoteShown) {
             coffeeNoteShown = true;

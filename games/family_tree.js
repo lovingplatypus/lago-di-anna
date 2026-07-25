@@ -1,6 +1,6 @@
 /* ================= GAME 1: The Sphynx Family Tree ================= */
 const famGame = {
-  title:'🐈 The Sphynx Family Tree',
+  title:'The Sphynx Family Tree',
   intro:'The family photos fell off the tree and got shuffled!\nDrag each cat onto their spot — parents on top, kitten at the bottom. If a photo bounces back, it belongs somewhere else.',
   introBtn:"fix the tree",
   // bg = pixel position of the painted frame in famtree_bg (1536x1024).
@@ -62,7 +62,7 @@ const famGame = {
       for(const p of this.pieces){
         if(p.locked && Math.abs(x-p.sx)<this.cw/2+8 && Math.abs(y-p.sy)<this.ch/2+8){
           p.factRead=true;
-          showGmsg('<h3>'+p.name+' 🐈</h3><p>'+p.fact+'</p><br><button onclick="famGame.factClosed()">aww</button>');
+          showGmsg('<h3>'+p.name+'</h3><p>'+p.fact+'</p><br><button onclick="famGame.factClosed()">aww</button>');
           return;
         }
       }
@@ -96,7 +96,7 @@ const famGame = {
       for(let i=0;i<6;i++) this.hearts.push({x:p.sx, y:p.sy-this.ch/2, vx:Math.random()*60-30, vy:-40-Math.random()*50, t:1.2});
       if(this.pieces.every(q=>q.locked) && !this.done){
         this.done=true; progress.family=true; refreshHud();
-        setTimeout(()=>showGmsg('<h3>La Famiglia 🐈♥</h3><p>You got them all right!\nNow tap each photo to read a fun fact about that cat.</p><button onclick="hideGmsg()">ooh!</button>'), 700);
+        setTimeout(()=>showGmsg('<h3>La Famiglia ♥</h3><p>You got them all right!\nNow tap each photo to read a fun fact about that cat.</p><button onclick="hideGmsg()">ooh!</button>'), 700);
       }
     } else {
       if(best && !best.locked && bd < this.cw*0.8){ this.wrong=best; this.wrongT=0.7; }
@@ -123,7 +123,7 @@ const famGame = {
     } else {
       gctx.fillStyle=p.tint; gctx.fillRect(x-w/2, y-h/2, w, h);
       gctx.font=(w*0.42)+'px serif'; gctx.textAlign='center';
-      gctx.fillText('🐈', x, y+w*0.08);
+      gctx.fillText(p.name[0], x, y+w*0.08);
     }
     gctx.restore();
     gctx.beginPath(); gctx.roundRect(x-w/2, y-h/2, w, h, 8);

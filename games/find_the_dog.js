@@ -1,11 +1,11 @@
 /* ================= GAME 3: Find the Dog ================= */
 const dogGame = {
-  title:'🔦 Find the Dog', round:0, light:{x:0,y:0}, found:false, foundT:0, target:null, btn:null,
+  title:'Find the Dog', round:0, light:{x:0,y:0}, found:false, foundT:0, target:null, btn:null,
   intro:'The dogs snuck out to play hide and seek in the dark — and dragged a friend along.\nSweep the flashlight (drag or tap) and shine it on whoever is hiding. Three rounds.',
   introBtn:'lights on',
   rounds:[
-    {img:'dogWs', h:96, r:170, bark:'WOOF! 🦴', bg:'dogBgYard', where:'the yard'},
-    {img:'dogBs', h:96, r:120, bark:'woof woof! 🖤', bg:'dogBgRoom', where:'the house'},
+    {img:'dogWs', h:96, r:170, bark:'WOOF!', bg:'dogBgYard', where:'the yard'},
+    {img:'dogBs', h:96, r:120, bark:'woof woof!', bg:'dogBgRoom', where:'the house'},
     {img:'platypus', h:66, r:95, bark:'...krrrr? that is not a dog!', bg:'dogBgPond', where:'the pond'},
   ],
   init(){
@@ -41,7 +41,7 @@ const dogGame = {
       this.round=this.rounds.length-1;
       this.found=false; this.btn=null;
       progress.dogs=true; refreshHud();
-      showGmsg('<h3>found everyone 🐾</h3><p>The dogs (and one confused platypus) are safe. They knew you would find them.</p><button onclick="closeGame()">good dogs</button>');
+      showGmsg('<h3>found everyone</h3><p>The dogs (and one confused platypus) are safe. They knew you would find them.</p><button onclick="closeGame()">good dogs</button>');
     } else this.place();
   },
   update(dt){

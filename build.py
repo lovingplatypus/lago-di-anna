@@ -139,11 +139,11 @@ html = r'''<!DOCTYPE html>
 <div id="splash">
   <div class="splashcard">
   <h1>Lago di Anna</h1>
-  <p class="sub">un piccolo mondo sul Lago di Como 🌸</p>
+  <p class="sub">un piccolo mondo sul Lago di Como</p>
   <ul class="howto">
-    <li>🗺️ Explore the lake — a little sign marks each game.</li>
-    <li>🎮 Play <b>every game at least once</b> (the icons up top fill in as you go).</li>
-    <li>🍈 Then visit the <b>fruit stall</b> — a letter is waiting there for you.</li>
+    <li>Explore the lake — a little sign marks each game.</li>
+    <li>Play <b>every game at least once</b> (the icons up top fill in as you go).</li>
+    <li>Then visit the <b>fruit stall</b> — a letter is waiting there for you.</li>
   </ul>
   <div class="ctrl">move with the arrow keys / WASD — or the on-screen stick on mobile</div>
   <div class="go">tap to begin</div>
@@ -151,7 +151,7 @@ html = r'''<!DOCTYPE html>
 </div>
 
 <div id="prompt"></div>
-<div id="hud"><span id="h-fam">🐈</span><span id="h-gar">🌸</span><span id="h-dog">🐾</span><span id="h-squ">🐿️</span></div>
+<div id="hud"><span id="h-fam">●</span><span id="h-gar">●</span><span id="h-dog">●</span><span id="h-squ">●</span></div>
 
 <div id="modal"><div class="card">
   <div class="em" id="m-em"></div>
@@ -190,7 +190,7 @@ html = r'''<!DOCTYPE html>
     <p class="sig">З ніжністю,<br>З теплом,<br>Looking ahead at our future with anticipation,</p>
     <p class="sig-name">Дмитро</p>
   </div>
-  <button id="fl-close">🍈</button>
+  <button id="fl-close">close</button>
 </div></div>
 
 <div id="stick"><div id="knob"></div></div>
@@ -255,11 +255,11 @@ const catZone = [320,300,500,395];
 /* waypoint signs drawn on the map so the games are findable from afar;
    x,y is the tip of the sign's pointer (map pixels) */
 const waypoints = [
-  {x:410,  y:158, em:'🐈', label:'family tree',    done:()=>progress.family},
-  {x:228,  y:682, em:'🌸', label:'ranunculus',     done:()=>progress.garden},
-  {x:1210, y:827, em:'🐿️', label:'squirrel fluff', done:()=>progress.squirrel},
-  {x:315,  y:922, em:'🦆', label:'platypus creek', done:()=>false},
-  {x:1095, y:287, em:'🍈', label:'fruit stall',    done:()=>false, stall:true},
+  {x:410,  y:158, label:'family tree',    done:()=>progress.family},
+  {x:228,  y:682, label:'ranunculus',     done:()=>progress.garden},
+  {x:1210, y:827, label:'squirrel fluff', done:()=>progress.squirrel},
+  {x:315,  y:922, label:'platypus creek', done:()=>false},
+  {x:1095, y:287, label:'fruit stall',    done:()=>false, stall:true},
 ];
 
 /* ---------- setup ---------- */
@@ -395,16 +395,16 @@ document.getElementById('equit').onclick = ()=>{
   const cb = onEmbedClose; onEmbedClose = null;
   cb && cb();
 };
-function openCreek(){ openEmbed('creek', '🦆 Platypus Creek', CREEK_HTML, '#0d3b3e'); }
+function openCreek(){ openEmbed('creek', 'Platypus Creek', CREEK_HTML, '#0d3b3e'); }
 
 /* the ranunculus puzzle reports solved blooms via postMessage; the first
    solve completes the garden and plants the map flowers */
 let gardenMsgShown = false;
 function openRanunculus(){
-  openEmbed('ranunculus', '🌸 Ranunculus', RANUNCULUS_HTML, '#0e150f', ()=>{
+  openEmbed('ranunculus', 'Ranunculus', RANUNCULUS_HTML, '#0e150f', ()=>{
     if(progress.garden && !gardenMsgShown){
       gardenMsgShown = true;
-      openModal({em:'🌸', title:'they bloomed',
+      openModal({title:'they bloomed',
         text:'I owe you an apology: once, on a beautiful day, I could not get you your favorite flowers.\n\nSo I planted them here instead — now they bloom for you whenever you want.\n\n(draft wording — the real message goes here)'});
     }
   });
@@ -486,21 +486,21 @@ function zoneAction(z){
   if(z.id==='garden'){ openRanunculus(); return; }
   if(z.id==='dock'){ openCreek(); return; }
   if(z.id==='house') return openModal({img:'plushy', title:"Anna's House",
-    text:'The squishiest platypus plushy on the lake is napping inside. The squishy game moves in soon 💛'});
+    text:'The squishiest platypus plushy on the lake is napping inside. The squishy game moves in soon.'});
   if(z.id==='stall'){
     if(allDone()){
-      openModal({em:'🍈', title:'The Fruit Stall',
+      openModal({title:'The Fruit Stall',
         text:'Among the lychee and mangosteen, a letter is waiting here for you.',
         alt:'read the letter', onAlt:openFruitLetter, closeLabel:'not yet'});
     } else {
-      openModal({em:'🍈', title:'The Fruit Stall',
+      openModal({title:'The Fruit Stall',
         text:'Lychee and mangosteen, picked this morning. Come back once you have played every game — something will be waiting.'});
     }
     return;
   }
   if(z.id==='oak'){
     if(!progress.squirrel) openGame(squirrelGame);
-    else openModal({em:'🐿️', title:'The Old Oak',
+    else openModal({title:'The Old Oak',
       text:'Two squirrels are curled up together in the coziest nest on the lake.',
       alt:'gather fluff again', onAlt:()=>openGame(squirrelGame)});
     return;
@@ -543,7 +543,7 @@ function update(dt, t){
     else if(nearCat){
       cat.meow = 2;
       heartBurst(cat.x, cat.y-28);
-      openModal({em:'🐈', title:'brrp ♥',
+      openModal({title:'brrp ♥',
         text: progress.family
           ? 'She is loafing proudly beside the finished family tree.'
           : 'The Sphynx family tree got scrambled. Help her put everyone back in their place?',
@@ -553,7 +553,7 @@ function update(dt, t){
     }
     else if(nearDog){
       const d = nearDog;
-      openModal({em:'🐕', title:'Woof!',
+      openModal({title:'Woof!',
         text: progress.dogs
           ? 'Tail wags. Wanna play hide and seek again?'
           : 'Wanna play hide and seek in the dark?',
@@ -759,13 +759,13 @@ function draw(t){
   /* waypoint signs, on top of everything */
   let wi = 0;
   for(const w of waypoints){
-    let txt = w.em + ' ' + w.label, faded = false;
-    if(w.stall && allDone()) txt = w.em + ' a letter for you';
+    let txt = w.label, faded = false;
+    if(w.stall && allDone()) txt = 'a letter for you';
     else if(w.done()){ txt += ' ✓'; faded = true; }
     drawMarker(w.x, w.y, txt, faded, t, wi++);
   }
   for(const d of dogs)
-    drawMarker(d.x, d.y-52, progress.dogs ? '🐾 ✓' : '🐾 hide & seek', progress.dogs, t, wi++);
+    drawMarker(d.x, d.y-52, progress.dogs ? 'hide & seek ✓' : 'hide & seek', progress.dogs, t, wi++);
 }
 
 function loop(now){
